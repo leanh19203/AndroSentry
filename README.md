@@ -20,6 +20,7 @@ Tải trực tiếp bằng git clone từ GitHub:
    npm install
 # 3. Cấu hình khóa API Gemini (Nếu muốn dùng AI Chat & AI Manifest Scanner)
 Để các tính năng AI thông minh hoạt động mượt mà trên máy Kali Linux của bạn:
+
    a. Lấy API Key miễn phí từ Google AI Studio.
    
    b. Thiết lập biến môi trường trên Kali terminal:
