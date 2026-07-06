@@ -12,6 +12,7 @@ Mở terminal trên máy Kali Linux của bạn và cài đặt các gói cần 
 Tải trực tiếp bằng git clone từ GitHub:
 
    git clone https://github.com/leanh19203/Kali-Android-Pentest-GUI.git
+   
    cd android-pentest-tool
    
    Tiến hành cài đặt các thư viện Node.js:
