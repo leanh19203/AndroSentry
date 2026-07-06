@@ -34,3 +34,14 @@ Chạy lệnh khởi động máy chủ lập trình:
    
 Sau khi khởi chạy thành công, terminal sẽ hiển thị đường dẫn truy cập. Bạn chỉ cần mở trình duyệt Web trên Kali Linux (Firefox) và truy cập vào địa chỉ:
 http://localhost:3000
+# 5. GỠ CÀI ĐẶT (UNINSTALL) KHỎI MÁY KALI LINUX
+Bước 1: Tắt ứng dụng đang chạy
+
+   Nếu bạn đang chạy trực tiếp trên Terminal hãy nhấn tổ hợp phím Ctrl + C để tắt server:
+
+Bước 2: Xóa thư mục chứa mã nguồn ứng dụng
+
+Bạn chỉ cần xóa thư mục chứa dự án mà bạn đã tải về máy Kali (ví dụ thư mục tên là Kali-Android-Pentest-GUI đặt ở thư mục người dùng):
+
+   rm -rf ~/Kali-Android-Pentest-GUI
+   
