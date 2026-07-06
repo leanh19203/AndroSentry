@@ -1,36 +1,20 @@
-# 1. Cài đặt các công cụ bổ trợ trên Kali Linux
-Mở terminal trên máy Kali Linux của bạn và cài đặt các gói cần thiết:
-   sudo apt update
-   Cài đặt Node.js và trình quản lý gói npm:
-   
-   sudo apt install -y nodejs npm
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-   Cài đặt các công cụ Android Pentest thực tế để sử dụng kèm theo:
-   
-   sudo apt install -y adb apktool jadx apksigner zipalign
-# 2. Cài đặt các thư viện phụ thuộc của ứng dụng
-Tải trực tiếp bằng git clone từ GitHub:
+# Run and deploy your AI Studio app
 
-   git clone https://github.com/leanh19203/Kali-Android-Pentest-GUI.git
-   
-   cd Kali-Android-Pentest-GUI
-   
-   Tiến hành cài đặt các thư viện Node.js:
-   
-   npm install
-# 3. Cấu hình khóa API Gemini (Nếu muốn dùng AI Chat & AI Manifest Scanner)
-Để các tính năng AI thông minh hoạt động mượt mà trên máy Kali Linux của bạn:
+This contains everything you need to run your app locally.
 
-   a. Lấy API Key miễn phí từ Google AI Studio.
-   
-   b. Thiết lập biến môi trường trên Kali terminal:
-   
-      export GEMINI_API_KEY="AIzaSyYourActualGeminiApiKeyGoesHere"
-      
-# 4. Khởi chạy ứng dụng
-Chạy lệnh khởi động máy chủ lập trình:
+View your app in AI Studio: https://ai.studio/apps/f96748e3-1967-4794-92cd-ed2cc53a475e
 
-   npm run dev
-   
-Sau khi khởi chạy thành công, terminal sẽ hiển thị đường dẫn truy cập. Bạn chỉ cần mở trình duyệt Web trên Kali Linux (Firefox) và truy cập vào địa chỉ:
-http://localhost:3000
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
