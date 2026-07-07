@@ -196,35 +196,65 @@ app.post("/api/execute-command", (req, res) => {
     return;
   }
 
-  // Security whitelist: Prevent dangerous bash operations (e.g., rm, mv, custom scripts downloading malware)
-  // Only allow android pentest tools: adb, apktool, keytool, apksigner, zipalign, frida, jadx
-  const allowedTools = ["adb", "apktool", "apksigner", "keytool", "zipalign", "frida", "frida-ps", "jadx", "jadx-gui", "echo", "ls"];
   const trimmedCmd = command.trim();
-  const firstWord = trimmedCmd.split(/\s+/)[0];
-  const binaryName = path.basename(firstWord).toLowerCase();
 
-  const isAllowed = allowedTools.some(tool => binaryName === tool || binaryName.startsWith(tool));
-
-  if (!isAllowed) {
+  // 1. Strict Redirection Block (Disallow writing or reading arbitrary files via shell redirection)
+  if (/[><]/.test(trimmedCmd)) {
     res.status(403).json({
-      error: `Từ chối thực thi: Lệnh bắt đầu bằng '${binaryName}' không có trong danh mục an toàn (adb, apktool, keytool, apksigner, zipalign, frida).`,
+      error: "Từ chối thực thi: Để bảo mật hệ thống, không cho phép sử dụng các toán tử chuyển hướng dữ liệu ('>' hoặc '<').",
     });
     return;
   }
 
-  // Prevent command injection symbols that allow running secondary custom scripts (e.g. ;, &&, ||, |, `) unless they are extremely structured.
-  // We'll block standard sequential executors that contain malicious chains, but allow grep pipes if safe.
-  if (trimmedCmd.includes(";") || trimmedCmd.includes("&&") && !trimmedCmd.includes("adb") || trimmedCmd.includes("||") || trimmedCmd.includes("`") || trimmedCmd.includes("$(")) {
-    // If it's a simple safe command, allow. Otherwise warning
-    if (trimmedCmd.match(/(rm\s+-rf|wget|curl|bash|sh\s+-c)/i)) {
+  // 2. Allowed pentest tools whitelist
+  const allowedTools = [
+    "adb",
+    "apktool",
+    "apksigner",
+    "keytool",
+    "zipalign",
+    "frida",
+    "frida-ps",
+    "jadx",
+    "jadx-gui",
+    "echo",
+    "ls",
+    "grep"
+  ];
+
+  // 3. Segment Validation: Split by execution delimiters (&&, ||, ;, |)
+  // This ensures chained commands or pipeline commands are fully validated.
+  const segments = trimmedCmd.split(/&&|\|\||;|\|/);
+
+  for (const segment of segments) {
+    const cleanSegment = segment.trim();
+    if (!cleanSegment) continue;
+
+    // Get the first word of the segment representing the executable command
+    const firstWord = cleanSegment.split(/\s+/)[0];
+    const binaryName = path.basename(firstWord).toLowerCase();
+
+    // Check if the binary is allowed
+    const isAllowed = allowedTools.some(tool => binaryName === tool || binaryName.startsWith(tool));
+
+    if (!isAllowed) {
       res.status(403).json({
-        error: "Từ chối thực thi: Lệnh chứa các chuỗi ký tự nối lệnh hoặc tải tệp không an toàn.",
+        error: `Từ chối thực thi: Thành phần lệnh '${cleanSegment}' bắt đầu bằng công cụ '${binaryName}' nằm ngoài danh mục công cụ Pentest được phép (adb, apktool, keytool, apksigner, zipalign, frida, jadx, grep).`,
+      });
+      return;
+    }
+
+    // 4. Heavy Blocklist Checks on commands/arguments (Blocking reverse shells, downloaders, destructors)
+    const blocklistPattern = /(rm\s+-rf|wget|curl|bash|sh\s+-c|nc\s+|netcat|ncat|python|perl|ruby|gcc|clang|\/etc\/passwd|id\s+|whoami)/i;
+    if (cleanSegment.match(blocklistPattern)) {
+      res.status(403).json({
+        error: "Từ chối thực thi: Phát hiện từ khóa bị cấm hoặc các tham số có nguy cơ khai thác hệ thống tiềm ẩn.",
       });
       return;
     }
   }
 
-  console.log(`[EXECUTE] Running local command: ${trimmedCmd}`);
+  console.log(`[EXECUTE] Running local secure command: ${trimmedCmd}`);
 
   exec(trimmedCmd, { timeout: 45000 }, (error, stdout, stderr) => {
     res.json({
