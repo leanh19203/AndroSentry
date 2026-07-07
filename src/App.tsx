@@ -892,13 +892,13 @@ export default function App() {
                         </div>
 
                         {/* Content Card */}
-                        <div className="flex-1 bg-[#1c2128] border border-[#30363d] rounded-xl p-4" id={`step-card-${step.id}`}>
+                        <div className="flex-1 min-w-0 bg-[#1c2128] border border-[#30363d] rounded-xl p-4" id={`step-card-${step.id}`}>
                           <h4 className="text-sm font-bold text-white mb-1">{step.title}</h4>
                           <p className="text-xs text-[#8b949e] mb-3">{step.description}</p>
 
                           {/* Render Terminal Box */}
-                          <div className="bg-[#0d1117] border border-[#21262d] rounded-lg p-3 flex items-center justify-between gap-3 font-mono text-xs mb-3" id={`terminal-box-${step.id}`}>
-                            <div className="flex items-center gap-2 overflow-x-auto" id={`cmd-text-container-${step.id}`}>
+                          <div className="bg-[#0d1117] border border-[#21262d] rounded-lg p-3 flex items-center justify-between gap-3 font-mono text-xs mb-3 w-full overflow-hidden" id={`terminal-box-${step.id}`}>
+                            <div className="flex items-center gap-2 overflow-x-auto min-w-0" id={`cmd-text-container-${step.id}`}>
                               <span className="text-red-500 flex-shrink-0">kali@root:~#</span>
                               <code className="text-emerald-400 whitespace-nowrap">{finalCmd}</code>
                             </div>
