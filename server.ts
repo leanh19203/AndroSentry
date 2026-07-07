@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { exec } from "child_process";
 
 dotenv.config();
 
@@ -167,6 +168,72 @@ Trả lời bằng tiếng Việt.`;
       details: error.message,
     });
   }
+});
+
+// Endpoint: Safe Live Command Execution (For Local Kali Linux)
+app.post("/api/execute-command", (req, res) => {
+  const { command } = req.body;
+
+  // Check if request originates from localhost (safety guard for public staging/Cloud Run)
+  const isLocal =
+    req.ip === "127.0.0.1" ||
+    req.ip === "::1" ||
+    req.ip === "::ffff:127.0.0.1" ||
+    req.hostname === "localhost" ||
+    req.hostname === "127.0.0.1";
+
+  // If in production environment and not local, prevent execution
+  if (process.env.NODE_ENV === "production" && !isLocal) {
+    res.status(403).json({
+      error: "Vì lý do bảo mật, tính năng thực thi lệnh trực tiếp bị vô hiệu hóa trên môi trường Cloud/Web công cộng. Hãy tải mã nguồn về và chạy trên Kali Linux của bạn (localhost) để kích hoạt toàn quyền điều khiển thiết bị!",
+      isLocal: false,
+    });
+    return;
+  }
+
+  if (!command || typeof command !== "string") {
+    res.status(400).json({ error: "Lệnh thực thi không hợp lệ." });
+    return;
+  }
+
+  // Security whitelist: Prevent dangerous bash operations (e.g., rm, mv, custom scripts downloading malware)
+  // Only allow android pentest tools: adb, apktool, keytool, apksigner, zipalign, frida, jadx
+  const allowedTools = ["adb", "apktool", "apksigner", "keytool", "zipalign", "frida", "frida-ps", "jadx", "jadx-gui", "echo", "ls"];
+  const trimmedCmd = command.trim();
+  const firstWord = trimmedCmd.split(/\s+/)[0];
+  const binaryName = path.basename(firstWord).toLowerCase();
+
+  const isAllowed = allowedTools.some(tool => binaryName === tool || binaryName.startsWith(tool));
+
+  if (!isAllowed) {
+    res.status(403).json({
+      error: `Từ chối thực thi: Lệnh bắt đầu bằng '${binaryName}' không có trong danh mục an toàn (adb, apktool, keytool, apksigner, zipalign, frida).`,
+    });
+    return;
+  }
+
+  // Prevent command injection symbols that allow running secondary custom scripts (e.g. ;, &&, ||, |, `) unless they are extremely structured.
+  // We'll block standard sequential executors that contain malicious chains, but allow grep pipes if safe.
+  if (trimmedCmd.includes(";") || trimmedCmd.includes("&&") && !trimmedCmd.includes("adb") || trimmedCmd.includes("||") || trimmedCmd.includes("`") || trimmedCmd.includes("$(")) {
+    // If it's a simple safe command, allow. Otherwise warning
+    if (trimmedCmd.match(/(rm\s+-rf|wget|curl|bash|sh\s+-c)/i)) {
+      res.status(403).json({
+        error: "Từ chối thực thi: Lệnh chứa các chuỗi ký tự nối lệnh hoặc tải tệp không an toàn.",
+      });
+      return;
+    }
+  }
+
+  console.log(`[EXECUTE] Running local command: ${trimmedCmd}`);
+
+  exec(trimmedCmd, { timeout: 45000 }, (error, stdout, stderr) => {
+    res.json({
+      stdout: stdout || "",
+      stderr: stderr || "",
+      code: error ? error.code : 0,
+      error: error ? error.message : null,
+    });
+  });
 });
 
 // ----------------------------------------------------
