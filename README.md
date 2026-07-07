@@ -28,12 +28,19 @@ Tải trực tiếp bằng git clone từ GitHub:
       export GEMINI_API_KEY="AIzaSyYourActualGeminiApiKeyGoesHere"
       
 # 4. Khởi chạy ứng dụng
-Chạy lệnh khởi động máy chủ lập trình:
+Chạy chế độ thử nghiệm (Development Mode):
 
    npm run dev
    
 Sau khi khởi chạy thành công, terminal sẽ hiển thị đường dẫn truy cập. Bạn chỉ cần mở trình duyệt Web trên Kali Linux (Firefox) và truy cập vào địa chỉ:
 http://localhost:3000
+
+Chạy chế độ tối ưu hiệu năng (Production Mode):
+
+npm run build
+
+npm run start
+
 # 5. GỠ CÀI ĐẶT (UNINSTALL) KHỎI MÁY KALI LINUX
 Bước 1: Tắt ứng dụng đang chạy
 
