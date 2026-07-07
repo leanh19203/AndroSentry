@@ -1,0 +1,30 @@
+MIT License
+
+Copyright (c) 2026 Kali Android Pentest GUI Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+### ⚠️ TUYÊN BỐ MIỄN TRỪ TRÁCH NHIỆM (DISCLAIMER)
+
+1. **Mục đích học tập và nghiên cứu**: Phần mềm này được thiết kế và cung cấp hoàn toàn cho mục đích giáo dục, học thuật, nghiên cứu an toàn thông tin và thử nghiệm xâm nhập (penetration testing) hợp pháp.
+2. **Sự cho phép của chủ sở hữu**: Người dùng tuyệt đối không được sử dụng công cụ này trên bất kỳ thiết bị, ứng dụng hoặc mạng lưới nào mà không có sự đồng ý bằng văn bản rõ ràng của chủ sở hữu hợp pháp.
+3. **Trách nhiệm pháp lý**: Tác giả và những người đóng góp cho dự án này không chịu bất kỳ trách nhiệm nào đối với bất kỳ thiệt hại trực tiếp, gián tiếp, vô tình hoặc cố ý nào phát sinh từ việc sử dụng sai mục đích hoặc sử dụng trái phép phần mềm này. 
+4. **Tuân thủ pháp luật**: Bạn hoàn toàn chịu trách nhiệm về hành vi của mình và phải đảm bảo rằng việc sử dụng công cụ này tuân thủ tất cả các luật pháp hiện hành tại quốc gia hoặc khu vực của bạn.
