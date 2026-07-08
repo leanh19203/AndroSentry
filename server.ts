@@ -93,7 +93,7 @@ Hãy trả về kết quả đánh giá chi tiết bằng tiếng Việt dưới
 Chú ý: Chỉ trả về JSON thuần túy, không có mã markdown \`\`\`json ở đầu và cuối. Đảm bảo cấu trúc JSON hoàn toàn hợp lệ và có thể parse được.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -150,7 +150,7 @@ Trả lời bằng tiếng Việt.`;
     }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: contents,
       config: {
         systemInstruction: systemInstruction,
