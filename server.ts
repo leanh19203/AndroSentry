@@ -9,7 +9,7 @@ import { exec } from "child_process";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
 // Parse JSON request bodies (increased limit for large manifests/code snippets)
 app.use(express.json({ limit: "10mb" }));
