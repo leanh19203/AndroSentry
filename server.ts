@@ -176,12 +176,11 @@ app.post("/api/execute-command", (req, res) => {
   const { command } = req.body;
 
   // Check if request originates from localhost (safety guard for public staging/Cloud Run)
+  // ONLY rely on req.ip (peer IP) to prevent Host Header spoofing / Host Header Injection
   const isLocal =
     req.ip === "127.0.0.1" ||
     req.ip === "::1" ||
-    req.ip === "::ffff:127.0.0.1" ||
-    req.hostname === "localhost" ||
-    req.hostname === "127.0.0.1";
+    req.ip === "::ffff:127.0.0.1";
 
   // If in production environment and not local, prevent execution
   if (process.env.NODE_ENV === "production" && !isLocal) {
@@ -199,10 +198,11 @@ app.post("/api/execute-command", (req, res) => {
 
   const trimmedCmd = command.trim();
 
-  // 1. Strict Redirection Block (Disallow writing or reading arbitrary files via shell redirection)
-  if (/[><]/.test(trimmedCmd)) {
+  // 1. Strict Redirection, Shell Expansion and Multi-line Block (Security Hardening)
+  // Disallow redirection (>, <), backticks (`), command substitution ($(), and multi-line commands (\n, \r)
+  if (/[><`]/.test(trimmedCmd) || /\$\(/.test(trimmedCmd) || /[\r\n]/.test(trimmedCmd)) {
     res.status(403).json({
-      error: "Từ chối thực thi: Để bảo mật hệ thống, không cho phép sử dụng các toán tử chuyển hướng dữ liệu ('>' hoặc '<').",
+      error: "Từ chối thực thi: Để bảo mật hệ thống, không cho phép sử dụng các toán tử chuyển hướng ('>', '<'), ký tự thực thi phụ ('`', '$(') hoặc các lệnh xuống dòng.",
     });
     return;
   }

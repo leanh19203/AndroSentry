@@ -4,13 +4,94 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-primary-bg: var(--bg-primary);
+  --color-secondary-bg: var(--bg-secondary);
+  --color-header-bg: var(--bg-header);
+  --color-border-main: var(--border-color);
+  --color-border-head: var(--border-header);
+  --color-accent: var(--accent-color);
+  --color-accent-hover: var(--accent-hover);
+  --color-txt-main: var(--text-primary);
+  --color-txt-muted: var(--text-secondary);
+}
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-header: #161b22;
+  --border-color: #30363d;
+  --border-header: #21262d;
+  --accent-color: #ef4444; /* red-500 */
+  --accent-hover: #dc2626; /* red-600 */
+  --accent-rgb: 239, 68, 68;
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
 }
 
 /* Base custom styles to ensure an extremely polished look */
 body {
   font-family: var(--font-sans);
-  background-color: #0d1117;
-  color: #c9d1d9;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Custom transitions for all elements when changing themes */
+*, *::before, *::after {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease-out;
+}
+
+/* Override compiled Tailwind hex classes with our CSS variables */
+.bg-\[\#0d1117\] {
+  background-color: var(--bg-primary) !important;
+}
+.bg-\[\#161b22\] {
+  background-color: var(--bg-secondary) !important;
+}
+.bg-\[\#1c2128\] {
+  background-color: var(--bg-secondary) !important;
+}
+.bg-\[\#1f242c\] {
+  background-color: var(--border-header) !important;
+}
+.bg-\[\#21262d\] {
+  background-color: var(--border-header) !important;
+}
+.bg-\[\#30363d\] {
+  background-color: var(--border-color) !important;
+}
+.border-\[\#21262d\] {
+  border-color: var(--border-header) !important;
+}
+.border-\[\#30363d\] {
+  border-color: var(--border-color) !important;
+}
+.text-\[\#8b949e\] {
+  color: var(--text-secondary) !important;
+}
+.text-\[\#c9d1d9\] {
+  color: var(--text-primary) !important;
+}
+
+/* Ensure inputs, textareas, and select menus adapt beautifully to themes */
+input, textarea, select {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent-color) !important;
+}
+
+/* Ensure headings adapt to the primary text color */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary) !important;
+}
+
+/* Map white text safely to text-primary, except on elements that must remain high-contrast on specific background colors */
+.text-white:not(button):not(button *):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-cyan-"]):not([class*="bg-green-"]):not([class*="bg-blue-"]):not(.bg-accent *):not(.bg-accent) {
+  color: var(--text-primary) !important;
 }
 
 /* Custom scrollbar to look sleek */
@@ -19,12 +100,12 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0d1117;
+  background: var(--bg-primary);
 }
 ::-webkit-scrollbar-thumb {
-  background: #21262d;
+  background: var(--border-color);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #30363d;
+  background: var(--border-header);
 }

@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Sparkles,
   HelpCircle,
+  Palette,
   Code,
   Info,
   Smartphone,
@@ -29,6 +30,84 @@ import {
 } from "lucide-react";
 import { ADB_COMMANDS, APKTOOL_STEPS, FRIDA_SCRIPTS } from "./commandsData";
 import { AdbCommand, ManifestFinding, AuditResult, ChatMessage } from "./types";
+
+export const THEME_CONFIGS = {
+  "kali-dark": {
+    name: "Kali Cyber (Mặc định)",
+    variables: {
+      "--bg-primary": "#0d1117",
+      "--bg-secondary": "#161b22",
+      "--bg-header": "#161b22",
+      "--border-color": "#30363d",
+      "--border-header": "#21262d",
+      "--accent-color": "#ef4444",
+      "--accent-hover": "#dc2626",
+      "--accent-rgb": "239, 68, 68",
+      "--text-primary": "#c9d1d9",
+      "--text-secondary": "#8b949e"
+    }
+  },
+  "nord-tech": {
+    name: "Nord Operator (Xanh Băng)",
+    variables: {
+      "--bg-primary": "#2e3440",
+      "--bg-secondary": "#3b4252",
+      "--bg-header": "#3b4252",
+      "--border-color": "#4c566a",
+      "--border-header": "#434c5e",
+      "--accent-color": "#88c0d0",
+      "--accent-hover": "#81a1c1",
+      "--accent-rgb": "136, 192, 208",
+      "--text-primary": "#e5e9f0",
+      "--text-secondary": "#8892b0"
+    }
+  },
+  "dracula": {
+    name: "Dracula (Huyền Bí)",
+    variables: {
+      "--bg-primary": "#1e1f29",
+      "--bg-secondary": "#282a36",
+      "--bg-header": "#282a36",
+      "--border-color": "#44475a",
+      "--border-header": "#343746",
+      "--accent-color": "#ff79c6",
+      "--accent-hover": "#ff92df",
+      "--accent-rgb": "255, 121, 198",
+      "--text-primary": "#f8f8f2",
+      "--text-secondary": "#6272a4"
+    }
+  },
+  "matrix-forest": {
+    name: "Matrix Code (Đặc Vụ)",
+    variables: {
+      "--bg-primary": "#020503",
+      "--bg-secondary": "#091008",
+      "--bg-header": "#091008",
+      "--border-color": "#1e3a1e",
+      "--border-header": "#152a15",
+      "--accent-color": "#22c55e",
+      "--accent-hover": "#15803d",
+      "--accent-rgb": "34, 197, 94",
+      "--text-primary": "#a7f3d0",
+      "--text-secondary": "#34d399"
+    }
+  },
+  "white-hat": {
+    name: "White Hat (Chuyên Gia)",
+    variables: {
+      "--bg-primary": "#f8fafc",
+      "--bg-secondary": "#ffffff",
+      "--bg-header": "#1e293b",
+      "--border-color": "#e2e8f0",
+      "--border-header": "#cbd5e1",
+      "--accent-color": "#2563eb",
+      "--accent-hover": "#1d4ed8",
+      "--accent-rgb": "37, 99, 235",
+      "--text-primary": "#1e293b",
+      "--text-secondary": "#475569"
+    }
+  }
+};
 
 // Sample vulnerable AndroidManifest.xml for user testing
 const SAMPLE_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
@@ -213,6 +292,24 @@ export default function App() {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [guideContent, setGuideContent] = useState("");
   const [isLoadingGuideContent, setIsLoadingGuideContent] = useState(false);
+
+  // Theme state: "kali-dark" | "nord-tech" | "dracula" | "matrix-forest" | "white-hat"
+  const [currentTheme, setCurrentTheme] = useState<string>(() => {
+    return localStorage.getItem("kali-android-pentest-theme") || "kali-dark";
+  });
+
+  const changeTheme = (newTheme: string) => {
+    setCurrentTheme(newTheme);
+    localStorage.setItem("kali-android-pentest-theme", newTheme);
+  };
+
+  useEffect(() => {
+    const activeThemeVars = THEME_CONFIGS[currentTheme as keyof typeof THEME_CONFIGS]?.variables || THEME_CONFIGS["kali-dark"].variables;
+    const root = document.documentElement;
+    Object.entries(activeThemeVars).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+  }, [currentTheme]);
 
   const handleDownloadGuide = async () => {
     if (isDownloadingGuide) return;
@@ -548,32 +645,52 @@ export default function App() {
     }
   };
 
+  const activeThemeVars = THEME_CONFIGS[currentTheme as keyof typeof THEME_CONFIGS]?.variables || THEME_CONFIGS["kali-dark"].variables;
+
   return (
     <div 
-      className="min-h-screen bg-[#0d1117] text-[#c9d1d9] flex flex-col selection:bg-[#1f6feb] selection:text-white transition-[padding-bottom] duration-300" 
+      className="min-h-screen bg-primary-bg text-txt-main flex flex-col selection:bg-accent/35 selection:text-white transition-[padding-bottom] duration-300" 
       id="app-root"
-      style={{ paddingBottom: showTerminal ? "320px" : "44px" }}
+      style={{ paddingBottom: showTerminal ? "320px" : "44px", ...activeThemeVars as React.CSSProperties }}
     >
       {/* HEADER BAR */}
-      <header className="border-b border-[#21262d] bg-[#161b22] px-6 py-4 sticky top-0 z-50 shadow-md" id="header-bar">
+      <header className="border-b border-border-head bg-secondary-bg px-6 py-4 sticky top-0 z-50 shadow-md transition-all duration-300" id="header-bar">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4" id="header-content">
           <div className="flex items-center gap-3" id="logo-section">
-            <div className="p-2.5 bg-red-600/10 rounded-xl border border-red-500/30 text-red-500 shadow-inner shadow-red-500/10" id="logo-icon-container">
-              <Shield className="w-7 h-7" id="logo-icon" />
+            <div className="p-2.5 bg-accent/10 rounded-xl border border-accent/30 text-accent shadow-inner shadow-accent/10 transition-all duration-300" id="logo-icon-container">
+              <Shield className="w-7 h-7 animate-pulse" id="logo-icon" />
             </div>
             <div id="logo-text">
               <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                Kali Android Pentest GUI <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 font-mono">v1.1</span>
+                Kali Android Pentest GUI <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.1</span>
               </h1>
-              <p className="text-xs text-[#8b949e]">Hộp công cụ & Hỗ trợ kiểm thử bảo mật ứng dụng Android cho Kali Linux</p>
+              <p className="text-xs text-txt-muted transition-colors duration-300">Hộp công cụ & Hỗ trợ kiểm thử bảo mật ứng dụng Android cho Kali Linux</p>
             </div>
           </div>
-
+ 
           {/* Quick status checks */}
           <div className="flex flex-wrap items-center gap-3 text-xs" id="status-checks">
+            {/* Theme Selector */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-bg border border-border-main text-txt-muted hover:border-accent/40 transition-all duration-300" id="theme-selector-container">
+              <Palette className="w-3.5 h-3.5 text-accent transition-colors duration-300" />
+              <select
+                value={currentTheme}
+                onChange={(e) => changeTheme(e.target.value)}
+                className="bg-transparent border-none text-white text-xs focus:ring-0 focus:outline-none font-medium cursor-pointer"
+                id="theme-select"
+                title="Thay đổi giao diện ứng dụng"
+              >
+                {Object.entries(THEME_CONFIGS).map(([key, config]) => (
+                  <option key={key} value={key} className="bg-secondary-bg text-txt-main">
+                    {config.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <button 
               onClick={handleOpenGuide}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600/15 hover:bg-emerald-600/35 border border-emerald-500/30 text-emerald-400 hover:text-white transition-all cursor-pointer font-medium animate-pulse hover:animate-none" 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600/15 hover:bg-emerald-600/35 border border-emerald-500/30 text-emerald-400 hover:text-white transition-all cursor-pointer font-medium" 
               id="view-guide-btn"
               title="Xem hướng dẫn sử dụng ngay trên ứng dụng"
             >
@@ -581,9 +698,9 @@ export default function App() {
               <span>Xem HDSD</span>
               <Eye className="w-3 h-3 opacity-70" />
             </button>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#21262d] border border-[#30363d]" id="env-badge">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-bg border border-border-main" id="env-badge">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span className="text-[#8b949e]">Kali OS Emulator Mode</span>
+              <span className="text-txt-muted">Kali OS Emulator Mode</span>
             </div>
             {healthStatus.checked && (
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
@@ -600,9 +717,9 @@ export default function App() {
       </header>
 
       {/* DETAILED APPS BANNER / TIPS */}
-      <div className="bg-[#1f242c] border-b border-[#30363d] py-3 px-6 text-sm text-[#8b949e]" id="info-bar">
+      <div className="bg-secondary-bg/60 border-b border-border-main py-3 px-6 text-sm text-txt-muted transition-colors duration-300" id="info-bar">
         <div className="max-w-7xl mx-auto flex items-center gap-2">
-          <Info className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+          <Info className="w-4 h-4 text-accent flex-shrink-0" />
           <span>
             <strong>Mẹo:</strong> Cấu hình <strong>GEMINI_API_KEY</strong> trong menu <strong>Settings</strong> phía trên để kích hoạt tính năng kiểm tra tự động Manifest bằng AI và Chat trợ lý chuyên sâu.
           </span>
@@ -613,14 +730,14 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6" id="main-content">
         
         {/* TAB NAVIGATION */}
-        <div className="flex flex-wrap gap-2 border-b border-[#21262d] pb-px" id="tab-navigation">
+        <div className="flex flex-wrap gap-2 border-b border-border-head pb-px" id="tab-navigation">
           <button
             id="tab-adb-btn"
             onClick={() => setActiveTab("adb")}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === "adb"
-                ? "border-red-500 text-white bg-[#161b22]/50"
-                : "border-transparent text-[#8b949e] hover:text-white hover:bg-[#161b22]/20"
+                ? "border-accent text-txt-main bg-secondary-bg"
+                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
             }`}
           >
             <Terminal className="w-4 h-4" />
@@ -632,8 +749,8 @@ export default function App() {
             onClick={() => setActiveTab("manifest")}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === "manifest"
-                ? "border-red-500 text-white bg-[#161b22]/50"
-                : "border-transparent text-[#8b949e] hover:text-white hover:bg-[#161b22]/20"
+                ? "border-accent text-txt-main bg-secondary-bg"
+                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
             }`}
           >
             <FileCode className="w-4 h-4" />
@@ -646,8 +763,8 @@ export default function App() {
             onClick={() => setActiveTab("apktool")}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === "apktool"
-                ? "border-red-500 text-white bg-[#161b22]/50"
-                : "border-transparent text-[#8b949e] hover:text-white hover:bg-[#161b22]/20"
+                ? "border-accent text-txt-main bg-secondary-bg"
+                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -659,8 +776,8 @@ export default function App() {
             onClick={() => setActiveTab("frida")}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === "frida"
-                ? "border-red-500 text-white bg-[#161b22]/50"
-                : "border-transparent text-[#8b949e] hover:text-white hover:bg-[#161b22]/20"
+                ? "border-accent text-txt-main bg-secondary-bg"
+                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
             }`}
           >
             <Cpu className="w-4 h-4" />
@@ -672,8 +789,8 @@ export default function App() {
             onClick={() => setActiveTab("chat")}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === "chat"
-                ? "border-red-500 text-white bg-[#161b22]/50"
-                : "border-transparent text-[#8b949e] hover:text-white hover:bg-[#161b22]/20"
+                ? "border-accent text-txt-main bg-secondary-bg"
+                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
             }`}
           >
             <MessageSquare className="w-4 h-4" />
@@ -1603,10 +1720,10 @@ export default function App() {
 
       {/* ONLINE USER GUIDE MODAL (POPUP) */}
       {isGuideOpen && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 md:p-6" id="guide-modal-backdrop">
-          <div className="bg-[#161b22] border border-[#30363d] w-full max-w-4xl h-[85vh] flex flex-col rounded-xl shadow-2xl overflow-hidden animate-fade-in" id="guide-modal-container">
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 md:p-6 transition-all duration-300" id="guide-modal-backdrop">
+          <div className="bg-secondary-bg border border-border-main w-full max-w-4xl h-[85vh] flex flex-col rounded-xl shadow-2xl overflow-hidden animate-fade-in" id="guide-modal-container">
             {/* Modal Header */}
-            <div className="bg-[#1c2128] border-b border-[#30363d] px-6 py-4 flex items-center justify-between border-t border-t-red-500/20" id="guide-modal-header">
+            <div className="bg-secondary-bg/80 border-b border-border-main px-6 py-4 flex items-center justify-between border-t border-t-accent/20" id="guide-modal-header">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-600/10 rounded-lg border border-emerald-500/30 text-emerald-400">
                   <BookOpen className="w-5 h-5" />
@@ -1645,7 +1762,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setIsGuideOpen(false)}
-                  className="p-1.5 rounded-lg bg-[#21262d] border border-[#30363d] text-[#8b949e] hover:text-white hover:border-[#8b949e] transition-colors ml-2 cursor-pointer"
+                  className="p-1.5 rounded-lg bg-primary-bg border border-border-main text-[#8b949e] hover:text-white hover:border-[#8b949e] transition-colors ml-2 cursor-pointer"
                   id="close-guide-modal-btn"
                 >
                   <X className="w-4 h-4" />
@@ -1654,7 +1771,7 @@ export default function App() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-[#0d1117] space-y-4" id="guide-modal-body">
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-primary-bg space-y-4" id="guide-modal-body">
               {isLoadingGuideContent ? (
                 <div className="h-full flex flex-col items-center justify-center py-20 gap-4">
                   <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
@@ -1668,11 +1785,11 @@ export default function App() {
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-[#161b22] border-t border-[#30363d] px-6 py-3 flex items-center justify-between text-xs text-[#8b949e]" id="guide-modal-footer">
+            <div className="bg-secondary-bg border-t border-border-main px-6 py-3 flex items-center justify-between text-xs text-[#8b949e]" id="guide-modal-footer">
               <span className="font-mono text-[10px]">Tài liệu chính thức v1.0.0</span>
               <button
                 onClick={() => setIsGuideOpen(false)}
-                className="px-4 py-1.5 rounded-lg bg-[#21262d] border border-[#30363d] text-white hover:bg-[#30363d] transition-colors font-medium text-xs cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-primary-bg border border-border-main text-white hover:bg-[#30363d] transition-colors font-medium text-xs cursor-pointer"
                 id="close-guide-modal-footer-btn"
               >
                 Đóng hướng dẫn
