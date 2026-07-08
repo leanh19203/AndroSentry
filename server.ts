@@ -15,17 +15,17 @@ const PORT = 3000;
 app.use(express.json({ limit: "10mb" }));
 
 // Initialize Google GenAI
-const apiKey = process.env.GEMINI_API_KEY;
 let aiClient: GoogleGenAI | null = null;
 
 function getAiClient() {
+  const currentKey = process.env.GEMINI_API_KEY;
+  if (!currentKey) {
+    console.warn("WARNING: GEMINI_API_KEY environment variable is not set. AI features will be unavailable.");
+    return null;
+  }
   if (!aiClient) {
-    if (!apiKey) {
-      console.warn("WARNING: GEMINI_API_KEY environment variable is not set. AI features will be unavailable.");
-      return null;
-    }
     aiClient = new GoogleGenAI({
-      apiKey: apiKey,
+      apiKey: currentKey,
       httpOptions: {
         headers: {
           "User-Agent": "aistudio-build",
@@ -44,7 +44,7 @@ function getAiClient() {
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
-    aiConfigured: !!apiKey,
+    aiConfigured: !!process.env.GEMINI_API_KEY,
     time: new Date().toISOString(),
   });
 });

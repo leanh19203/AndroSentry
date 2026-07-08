@@ -205,6 +205,32 @@ export default function App() {
       });
   }, []);
 
+  const [isDownloadingGuide, setIsDownloadingGuide] = useState(false);
+
+  const handleDownloadGuide = async () => {
+    if (isDownloadingGuide) return;
+    setIsDownloadingGuide(true);
+    try {
+      const response = await fetch("/api/download-guide");
+      if (!response.ok) {
+        throw new Error("Tệp tài liệu không tồn tại hoặc lỗi máy chủ.");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("Lỗi tải tài liệu:", error);
+    } finally {
+      setIsDownloadingGuide(false);
+    }
+  };
+
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -360,17 +386,19 @@ export default function App() {
 
           {/* Quick status checks */}
           <div className="flex flex-wrap items-center gap-3 text-xs" id="status-checks">
-            <a 
-              href="/api/download-guide" 
-              download="Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600/15 hover:bg-red-600/35 border border-red-500/30 text-red-400 hover:text-white transition-all cursor-pointer font-medium" 
+            <button 
+              onClick={handleDownloadGuide}
+              disabled={isDownloadingGuide}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:text-white transition-all cursor-pointer font-medium ${
+                isDownloadingGuide ? "bg-red-600/5 opacity-50 cursor-not-allowed" : "bg-red-600/15 hover:bg-red-600/35"
+              }`}
               id="download-doc-btn"
               title="Tải tệp tài liệu hướng dẫn sử dụng Word (.docx)"
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>Tải HDSD Word (.docx)</span>
+              <span>{isDownloadingGuide ? "Đang tải..." : "Tải HDSD Word (.docx)"}</span>
               <Download className="w-3 h-3 opacity-70" />
-            </a>
+            </button>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#21262d] border border-[#30363d]" id="env-badge">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
               <span className="text-[#8b949e]">Kali OS Emulator Mode</span>
