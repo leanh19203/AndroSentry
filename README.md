@@ -1,4 +1,4 @@
-1. Cài đặt các công cụ bổ trợ trên Kali Linux
+# 1. Cài đặt các công cụ bổ trợ trên Kali Linux
 Mở terminal trên máy Kali Linux của bạn và cài đặt các gói cần thiết: sudo apt update Cài đặt Node.js và trình quản lý gói npm:
 
 sudo apt install -y nodejs npm
@@ -7,7 +7,7 @@ Cài đặt các công cụ Android Pentest thực tế để sử dụng kèm t
 
 sudo apt install -y adb apktool jadx apksigner zipalign
 
-2. Cài đặt các thư viện phụ thuộc của ứng dụng
+# 2. Cài đặt các thư viện phụ thuộc của ứng dụng
 Tải trực tiếp bằng git clone từ GitHub:
 
 git clone https://github.com/leanh19203/Kali-Android-Pentest-GUI.git
@@ -18,7 +18,7 @@ Tiến hành cài đặt các thư viện Node.js:
 
 npm install
 
-3. Cấu hình khóa API Gemini (Nếu muốn dùng AI Chat & AI Manifest Scanner)
+# 3. Cấu hình khóa API Gemini (Nếu muốn dùng AI Chat & AI Manifest Scanner)
 Để các tính năng AI thông minh hoạt động mượt mà trên máy Kali Linux của bạn:
 
 a. Lấy API Key miễn phí từ Google AI Studio.
@@ -27,7 +27,7 @@ b. Thiết lập biến môi trường trên Kali terminal:
 
 export GEMINI_API_KEY="AIzaSyYourActualGeminiApiKeyGoesHere"
 
-4. Khởi chạy ứng dụng
+# 4. Khởi chạy ứng dụng
 Chạy chế độ thử nghiệm (Development Mode):
 
 npm run dev
@@ -40,7 +40,7 @@ npm run build
 
 npm run start
 
-5. GỠ CÀI ĐẶT (UNINSTALL) KHỎI MÁY KALI LINUX
+# 5. GỠ CÀI ĐẶT (UNINSTALL) KHỎI MÁY KALI LINUX
 Bước 1: Tắt ứng dụng đang chạy
 
 Nếu bạn đang chạy trực tiếp trên Terminal hãy nhấn tổ hợp phím Ctrl + C để tắt server:
