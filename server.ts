@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -264,6 +265,18 @@ app.post("/api/execute-command", (req, res) => {
       error: error ? error.message : null,
     });
   });
+});
+
+// Endpoint: Download User Guide Document (.docx)
+app.get("/api/download-guide", (req, res) => {
+  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx");
+  if (fs.existsSync(filePath)) {
+    res.setHeader("Content-Disposition", "attachment; filename=Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: "Tệp hướng dẫn sử dụng không tồn tại. Vui lòng chạy lệnh tạo file trước." });
+  }
 });
 
 // ----------------------------------------------------

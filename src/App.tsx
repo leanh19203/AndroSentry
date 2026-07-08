@@ -20,7 +20,9 @@ import {
   XCircle,
   ArrowRight,
   Search,
-  MessageSquare
+  MessageSquare,
+  FileText,
+  Download
 } from "lucide-react";
 import { ADB_COMMANDS, APKTOOL_STEPS, FRIDA_SCRIPTS } from "./commandsData";
 import { AdbCommand, ManifestFinding, AuditResult, ChatMessage } from "./types";
@@ -357,7 +359,18 @@ export default function App() {
           </div>
 
           {/* Quick status checks */}
-          <div className="flex items-center gap-3 text-xs" id="status-checks">
+          <div className="flex flex-wrap items-center gap-3 text-xs" id="status-checks">
+            <a 
+              href="/api/download-guide" 
+              download="Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600/15 hover:bg-red-600/35 border border-red-500/30 text-red-400 hover:text-white transition-all cursor-pointer font-medium" 
+              id="download-doc-btn"
+              title="Tải tệp tài liệu hướng dẫn sử dụng Word (.docx)"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Tải HDSD Word (.docx)</span>
+              <Download className="w-3 h-3 opacity-70" />
+            </a>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#21262d] border border-[#30363d]" id="env-badge">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
               <span className="text-[#8b949e]">Kali OS Emulator Mode</span>
