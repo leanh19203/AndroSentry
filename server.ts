@@ -279,6 +279,33 @@ app.get("/api/download-guide", (req, res) => {
   }
 });
 
+// Endpoint: Download User Guide Document (.md)
+app.get("/api/download-guide-md", (req, res) => {
+  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.md");
+  if (fs.existsSync(filePath)) {
+    res.setHeader("Content-Disposition", "attachment; filename=Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.md");
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: "Tệp hướng dẫn sử dụng Markdown không tồn tại." });
+  }
+});
+
+// Endpoint: Read User Guide Document (.md) for web display
+app.get("/api/read-guide", (req, res) => {
+  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.md");
+  if (fs.existsSync(filePath)) {
+    try {
+      const content = fs.readFileSync(filePath, "utf-8");
+      res.json({ content });
+    } catch (err: any) {
+      res.status(500).json({ error: "Không thể đọc tệp hướng dẫn sử dụng.", details: err.message });
+    }
+  } else {
+    res.status(404).json({ error: "Tệp hướng dẫn sử dụng Markdown không tồn tại." });
+  }
+});
+
 // ----------------------------------------------------
 // VITE AND STATIC SERVING MIDDLEWARE
 // ----------------------------------------------------

@@ -22,7 +22,10 @@ import {
   Search,
   MessageSquare,
   FileText,
-  Download
+  Download,
+  BookOpen,
+  Eye,
+  X
 } from "lucide-react";
 import { ADB_COMMANDS, APKTOOL_STEPS, FRIDA_SCRIPTS } from "./commandsData";
 import { AdbCommand, ManifestFinding, AuditResult, ChatMessage } from "./types";
@@ -206,6 +209,10 @@ export default function App() {
   }, []);
 
   const [isDownloadingGuide, setIsDownloadingGuide] = useState(false);
+  const [isDownloadingGuideMd, setIsDownloadingGuideMd] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [guideContent, setGuideContent] = useState("");
+  const [isLoadingGuideContent, setIsLoadingGuideContent] = useState(false);
 
   const handleDownloadGuide = async () => {
     if (isDownloadingGuide) return;
@@ -231,10 +238,188 @@ export default function App() {
     }
   };
 
+  const handleDownloadGuideMd = async () => {
+    if (isDownloadingGuideMd) return;
+    setIsDownloadingGuideMd(true);
+    try {
+      const response = await fetch("/api/download-guide-md");
+      if (!response.ok) {
+        throw new Error("Tệp tài liệu Markdown không tồn tại hoặc lỗi máy chủ.");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.md";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("Lỗi tải tài liệu Markdown:", error);
+    } finally {
+      setIsDownloadingGuideMd(false);
+    }
+  };
+
+  const handleOpenGuide = async () => {
+    setIsGuideOpen(true);
+    if (guideContent) return;
+    setIsLoadingGuideContent(true);
+    try {
+      const response = await fetch("/api/read-guide");
+      if (!response.ok) {
+        throw new Error("Không thể đọc tệp tài liệu hướng dẫn.");
+      }
+      const data = await response.json();
+      setGuideContent(data.content || "");
+    } catch (error: any) {
+      console.error("Lỗi đọc tài liệu:", error);
+      setGuideContent("Không thể tải nội dung hướng dẫn sử dụng. Vui lòng thử lại.");
+    } finally {
+      setIsLoadingGuideContent(false);
+    }
+  };
+
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const parseInlineStyles = (text: string): React.ReactNode[] => {
+    // Basic parser for **bold** and `code`
+    let parts: React.ReactNode[] = [text];
+
+    // Parse bold **text**
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    let newParts: React.ReactNode[] = [];
+    for (const part of parts) {
+      if (typeof part === "string") {
+        let lastIndex = 0;
+        let match;
+        const subParts: React.ReactNode[] = [];
+        let indexKey = 0;
+        while ((match = boldRegex.exec(part)) !== null) {
+          if (match.index > lastIndex) {
+            subParts.push(part.slice(lastIndex, match.index));
+          }
+          subParts.push(
+            <strong key={`bold-${match.index}-${indexKey++}`} className="text-white font-semibold">
+              {match[1]}
+            </strong>
+          );
+          lastIndex = boldRegex.lastIndex;
+        }
+        if (lastIndex < part.length) {
+          subParts.push(part.slice(lastIndex));
+        }
+        newParts.push(...subParts);
+      } else {
+        newParts.push(part);
+      }
+    }
+    parts = newParts;
+
+    // Parse inline code `code`
+    const codeRegex = /`(.*?)`/g;
+    newParts = [];
+    for (const part of parts) {
+      if (typeof part === "string") {
+        let lastIndex = 0;
+        let match;
+        const subParts: React.ReactNode[] = [];
+        let indexKey = 0;
+        while ((match = codeRegex.exec(part)) !== null) {
+          if (match.index > lastIndex) {
+            subParts.push(part.slice(lastIndex, match.index));
+          }
+          subParts.push(
+            <code key={`code-${match.index}-${indexKey++}`} className="font-mono bg-red-500/10 border border-red-500/25 text-red-400 px-1.5 py-0.5 rounded text-xs select-all">
+              {match[1]}
+            </code>
+          );
+          lastIndex = codeRegex.lastIndex;
+        }
+        if (lastIndex < part.length) {
+          subParts.push(part.slice(lastIndex));
+        }
+        newParts.push(...subParts);
+      } else {
+        newParts.push(part);
+      }
+    }
+    parts = newParts;
+
+    return parts;
+  };
+
+  const renderFormattedMarkdown = (markdownText: string) => {
+    if (!markdownText) return null;
+    const lines = markdownText.split("\n");
+    return lines.map((line, idx) => {
+      const trimmed = line.trim();
+      if (!trimmed) return <div key={`empty-${idx}`} className="h-2"></div>;
+
+      // Divider
+      if (trimmed === "---") {
+        return <hr key={`divider-${idx}`} className="my-6 border-[#30363d]" />;
+      }
+
+      // Headers
+      if (trimmed.startsWith("# ")) {
+        return (
+          <h1 key={`h1-${idx}`} className="text-2xl font-extrabold text-white mt-6 mb-4 tracking-tight border-b border-[#30363d] pb-2 text-red-500 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-red-500" />
+            {parseInlineStyles(trimmed.slice(2))}
+          </h1>
+        );
+      }
+      if (trimmed.startsWith("## ")) {
+        return (
+          <h2 key={`h2-${idx}`} className="text-xl font-bold text-white mt-5 mb-3 tracking-tight text-cyan-400">
+            {parseInlineStyles(trimmed.slice(3))}
+          </h2>
+        );
+      }
+      if (trimmed.startsWith("### ")) {
+        return (
+          <h3 key={`h3-${idx}`} className="text-lg font-bold text-white mt-4 mb-2 tracking-tight text-amber-400">
+            {parseInlineStyles(trimmed.slice(4))}
+          </h3>
+        );
+      }
+
+      // Lists
+      if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+        const content = trimmed.slice(2);
+        return (
+          <div key={`li-${idx}`} className="flex items-start gap-2.5 my-1.5 pl-4 text-sm leading-relaxed text-[#c9d1d9]">
+            <span className="text-cyan-500 mt-2 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+            <div>{parseInlineStyles(content)}</div>
+          </div>
+        );
+      }
+
+      if (/^\d+\.\s+/.test(trimmed)) {
+        const numMatch = trimmed.match(/^(\d+)\.\s+/);
+        const num = numMatch ? numMatch[1] : "";
+        const content = trimmed.replace(/^\d+\.\s+/, "");
+        return (
+          <div key={`ol-${idx}`} className="flex items-start gap-2.5 my-1.5 pl-4 text-sm leading-relaxed text-[#c9d1d9]">
+            <span className="text-red-500 font-mono font-bold mt-0.5 flex-shrink-0 text-xs">{num}.</span>
+            <div>{parseInlineStyles(content)}</div>
+          </div>
+        );
+      }
+
+      // Regular paragraph
+      return (
+        <p key={`p-${idx}`} className="my-2.5 text-sm leading-relaxed text-[#c9d1d9] text-justify">
+          {parseInlineStyles(trimmed)}
+        </p>
+      );
+    });
   };
 
   // Process command parameters based on user input
@@ -387,17 +572,14 @@ export default function App() {
           {/* Quick status checks */}
           <div className="flex flex-wrap items-center gap-3 text-xs" id="status-checks">
             <button 
-              onClick={handleDownloadGuide}
-              disabled={isDownloadingGuide}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:text-white transition-all cursor-pointer font-medium ${
-                isDownloadingGuide ? "bg-red-600/5 opacity-50 cursor-not-allowed" : "bg-red-600/15 hover:bg-red-600/35"
-              }`}
-              id="download-doc-btn"
-              title="Tải tệp tài liệu hướng dẫn sử dụng Word (.docx)"
+              onClick={handleOpenGuide}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600/15 hover:bg-emerald-600/35 border border-emerald-500/30 text-emerald-400 hover:text-white transition-all cursor-pointer font-medium animate-pulse hover:animate-none" 
+              id="view-guide-btn"
+              title="Xem hướng dẫn sử dụng ngay trên ứng dụng"
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span>{isDownloadingGuide ? "Đang tải..." : "Tải HDSD Word (.docx)"}</span>
-              <Download className="w-3 h-3 opacity-70" />
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Xem HDSD</span>
+              <Eye className="w-3 h-3 opacity-70" />
             </button>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#21262d] border border-[#30363d]" id="env-badge">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
@@ -1418,6 +1600,87 @@ export default function App() {
           </p>
         </div>
       </footer>
+
+      {/* ONLINE USER GUIDE MODAL (POPUP) */}
+      {isGuideOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 md:p-6" id="guide-modal-backdrop">
+          <div className="bg-[#161b22] border border-[#30363d] w-full max-w-4xl h-[85vh] flex flex-col rounded-xl shadow-2xl overflow-hidden animate-fade-in" id="guide-modal-container">
+            {/* Modal Header */}
+            <div className="bg-[#1c2128] border-b border-[#30363d] px-6 py-4 flex items-center justify-between border-t border-t-red-500/20" id="guide-modal-header">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-600/10 rounded-lg border border-emerald-500/30 text-emerald-400">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                    Tài liệu Hướng dẫn sử dụng & Mô tả tính năng
+                  </h3>
+                  <p className="text-xs text-[#8b949e]">Chi tiết hướng dẫn cài đặt, quy trình kiểm thử và cơ chế bảo mật</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadGuideMd}
+                  disabled={isDownloadingGuideMd}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-cyan-500/30 text-cyan-400 hover:text-white text-xs font-medium transition-colors cursor-pointer ${
+                    isDownloadingGuideMd ? "bg-cyan-600/5 opacity-50 cursor-not-allowed" : "bg-cyan-600/10 hover:bg-cyan-600/35"
+                  }`}
+                  id="modal-download-md"
+                  title="Tải hướng dẫn dạng Markdown"
+                >
+                  <FileCode className="w-3.5 h-3.5" />
+                  <span>{isDownloadingGuideMd ? "Đang tải..." : "Tải tệp .md"}</span>
+                </button>
+                <button
+                  onClick={handleDownloadGuide}
+                  disabled={isDownloadingGuide}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:text-white text-xs font-medium transition-colors cursor-pointer ${
+                    isDownloadingGuide ? "bg-red-600/5 opacity-50 cursor-not-allowed" : "bg-red-600/10 hover:bg-red-600/35"
+                  }`}
+                  id="modal-download-docx"
+                  title="Tải tệp tài liệu hướng dẫn Word (.docx)"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{isDownloadingGuide ? "Đang tải..." : "Tải tệp .docx"}</span>
+                </button>
+                <button
+                  onClick={() => setIsGuideOpen(false)}
+                  className="p-1.5 rounded-lg bg-[#21262d] border border-[#30363d] text-[#8b949e] hover:text-white hover:border-[#8b949e] transition-colors ml-2 cursor-pointer"
+                  id="close-guide-modal-btn"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-[#0d1117] space-y-4" id="guide-modal-body">
+              {isLoadingGuideContent ? (
+                <div className="h-full flex flex-col items-center justify-center py-20 gap-4">
+                  <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+                  <p className="text-sm text-[#8b949e] animate-pulse">Đang tải và đồng bộ tài liệu hướng dẫn...</p>
+                </div>
+              ) : (
+                <div className="max-w-3xl mx-auto pb-8">
+                  {renderFormattedMarkdown(guideContent)}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-[#161b22] border-t border-[#30363d] px-6 py-3 flex items-center justify-between text-xs text-[#8b949e]" id="guide-modal-footer">
+              <span className="font-mono text-[10px]">Tài liệu chính thức v1.0.0</span>
+              <button
+                onClick={() => setIsGuideOpen(false)}
+                className="px-4 py-1.5 rounded-lg bg-[#21262d] border border-[#30363d] text-white hover:bg-[#30363d] transition-colors font-medium text-xs cursor-pointer"
+                id="close-guide-modal-footer-btn"
+              >
+                Đóng hướng dẫn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
