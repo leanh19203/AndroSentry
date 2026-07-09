@@ -563,6 +563,252 @@ export default function App() {
     }
   };
 
+  const handleExportMarkdown = () => {
+    if (!auditResult) return;
+    
+    let md = `# BÁO CÁO ĐÁNH GIÁ BẢO MẬT ANDROID MANIFEST\n`;
+    md += `*Thời gian thực hiện: ${new Date().toLocaleString("vi-VN")}*\n`;
+    md += `*Điểm số bảo mật hệ thống: **${auditResult.score}/100***\n\n`;
+    md += `## 1. Tóm tắt đánh giá\n`;
+    md += `${auditResult.summary}\n\n`;
+    md += `## 2. Danh sách lỗ hổng phát hiện (${auditResult.findings?.length || 0})\n\n`;
+    
+    if (auditResult.findings && auditResult.findings.length > 0) {
+      auditResult.findings.forEach((finding, idx) => {
+        md += `### [${finding.severity}] ${idx + 1}. ${finding.title}\n`;
+        md += `- **Mức độ nghiêm trọng:** ${finding.severity}\n`;
+        md += `- **Vị trí phát hiện:** \`${finding.location}\`\n\n`;
+        md += `#### Mô tả chi tiết:\n${finding.description}\n\n`;
+        md += `#### Cách khắc phục & Khuyến nghị:\n\`\`\`xml\n${finding.remediation}\n\`\`\`\n\n`;
+        md += `---\n\n`;
+      });
+    } else {
+      md += `🎉 Tuyệt vời! Không phát hiện bất kỳ lỗ hổng bảo mật nghiêm trọng nào.\n`;
+    }
+    
+    md += `\n*Báo cáo được tạo tự động bởi Kali Android Pentest GUI - Trí tuệ nhân tạo hỗ trợ White Hat Hacker.*\n`;
+
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Bao_Cao_Mat_An_AndroidManifest_${new Date().toISOString().slice(0,10)}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportHtml = () => {
+    if (!auditResult) return;
+
+    let findingsHtml = "";
+    if (auditResult.findings && auditResult.findings.length > 0) {
+      auditResult.findings.forEach((finding, idx) => {
+        let severityColor = "gray";
+        if (finding.severity === "CRITICAL") severityColor = "#ef4444";
+        else if (finding.severity === "HIGH") severityColor = "#f97316";
+        else if (finding.severity === "MEDIUM") severityColor = "#eab308";
+        else if (finding.severity === "LOW") severityColor = "#3b82f6";
+
+        findingsHtml += `
+        <div class="finding-card">
+          <div class="finding-header">
+            <span class="finding-title">${idx + 1}. ${finding.title}</span>
+            <span class="severity-badge" style="background: ${severityColor}20; color: ${severityColor}; border: 1px solid ${severityColor}40;">${finding.severity}</span>
+          </div>
+          <p class="finding-desc"><strong>Mô tả rủi ro:</strong> ${finding.description}</p>
+          <div class="finding-location"><strong>Vị trí phát hiện:</strong> <code>${finding.location}</code></div>
+          <div class="remediation-block">
+            <strong>Cách khắc phục đề xuất:</strong>
+            <pre><code>${finding.remediation.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>
+          </div>
+        </div>
+        `;
+      });
+    } else {
+      findingsHtml = `<p style="text-align:center; color:#8b949e; padding: 40px 0;">🎉 Tuyệt vời! Không phát hiện lỗ hổng bảo mật nào trong file AndroidManifest.xml này.</p>`;
+    }
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Báo cáo Đánh giá Bảo mật AndroidManifest.xml</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #0d1117;
+          color: #c9d1d9;
+          margin: 0;
+          padding: 40px 20px;
+          line-height: 1.6;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          background: #161b22;
+          border: 1px solid #30363d;
+          border-radius: 12px;
+          padding: 30px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        h1 {
+          color: #ef4444;
+          font-size: 24px;
+          border-bottom: 2px solid #30363d;
+          padding-bottom: 10px;
+          margin-top: 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .meta-info {
+          font-size: 13px;
+          color: #8b949e;
+          margin-bottom: 25px;
+          display: flex;
+          justify-content: space-between;
+          border-bottom: 1px solid #21262d;
+          padding-bottom: 15px;
+        }
+        .score-badge {
+          background: ${auditResult.score >= 80 ? '#10b98120' : auditResult.score >= 50 ? '#f59e0b20' : '#ef444420'};
+          color: ${auditResult.score >= 80 ? '#10b981' : auditResult.score >= 50 ? '#f59e0b' : '#ef4444'};
+          font-weight: bold;
+          padding: 4px 10px;
+          border-radius: 6px;
+          border: 1px solid ${auditResult.score >= 80 ? '#10b98140' : auditResult.score >= 50 ? '#f59e0b40' : '#ef444440'};
+        }
+        .summary-box {
+          background: #1f242c;
+          border: 1px solid #30363d;
+          border-radius: 8px;
+          padding: 15px 20px;
+          margin-bottom: 30px;
+        }
+        .summary-box h2 {
+          font-size: 16px;
+          color: #ffffff;
+          margin-top: 0;
+          margin-bottom: 8px;
+        }
+        .finding-card {
+          background: #0d1117;
+          border: 1px solid #21262d;
+          border-radius: 8px;
+          padding: 20px;
+          margin-bottom: 20px;
+        }
+        .finding-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 15px;
+          gap: 15px;
+        }
+        .finding-title {
+          font-weight: bold;
+          font-size: 16px;
+          color: #ffffff;
+        }
+        .severity-badge {
+          font-size: 11px;
+          font-family: monospace;
+          font-weight: bold;
+          padding: 3px 8px;
+          border-radius: 4px;
+        }
+        .finding-desc {
+          font-size: 14px;
+          margin-bottom: 12px;
+          color: #c9d1d9;
+        }
+        .finding-location {
+          font-size: 13px;
+          font-family: monospace;
+          color: #8b949e;
+          background: #161b22;
+          padding: 6px 12px;
+          border-radius: 4px;
+          border: 1px solid #21262d;
+          margin-bottom: 15px;
+        }
+        .remediation-block {
+          background: #161b22;
+          border-left: 3px solid #10b981;
+          border-radius: 0 4px 4px 0;
+          padding: 12px 15px;
+        }
+        .remediation-block strong {
+          font-size: 12px;
+          color: #10b981;
+          text-transform: uppercase;
+          display: block;
+          margin-bottom: 5px;
+        }
+        pre {
+          background: #0d1117;
+          padding: 10px;
+          border-radius: 4px;
+          overflow-x: auto;
+          margin: 5px 0 0 0;
+          border: 1px solid #21262d;
+        }
+        code {
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 12px;
+        }
+        .footer {
+          text-align: center;
+          font-size: 11px;
+          color: #8b949e;
+          margin-top: 40px;
+          border-top: 1px solid #21262d;
+          padding-top: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🛡️ Báo cáo Bảo mật AndroidManifest.xml</h1>
+        <div class="meta-info">
+          <span>Thời gian: ${new Date().toLocaleString("vi-VN")}</span>
+          <div>
+            <span>Đánh giá chung: </span>
+            <span class="score-badge">${auditResult.score}/100</span>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          <h2>Tóm tắt kiểm định</h2>
+          <p style="margin: 0; font-size: 14px; color: #8b949e;">${auditResult.summary}</p>
+        </div>
+
+        <h3 style="color: #ffffff; border-bottom: 1px solid #30363d; padding-bottom: 8px; margin-bottom: 20px;">Danh sách lỗ hổng (${auditResult.findings?.length || 0})</h3>
+        ${findingsHtml}
+
+        <div class="footer">
+          Báo cáo bảo mật được kết xuất bởi Kali Android Pentest GUI - Trợ lý Kiểm thử Xâm nhập Di động Chuyên nghiệp.
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Bao_Cao_Mat_An_AndroidManifest_${new Date().toISOString().slice(0,10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // Submit chat message
   const handleSendChat = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -717,12 +963,26 @@ export default function App() {
       </header>
 
       {/* DETAILED APPS BANNER / TIPS */}
-      <div className="bg-secondary-bg/60 border-b border-border-main py-3 px-6 text-sm text-txt-muted transition-colors duration-300" id="info-bar">
-        <div className="max-w-7xl mx-auto flex items-center gap-2">
-          <Info className="w-4 h-4 text-accent flex-shrink-0" />
-          <span>
-            <strong>Mẹo:</strong> Cấu hình <strong>GEMINI_API_KEY</strong> trong menu <strong>Settings</strong> phía trên để kích hoạt tính năng kiểm tra tự động Manifest bằng AI và Chat trợ lý chuyên sâu.
-          </span>
+      <div className="bg-secondary-bg/60 border-b border-border-main py-3.5 px-6 text-xs text-txt-muted transition-all duration-300" id="info-bar">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-y-2 gap-x-6 w-full" id="local-pentest-checklist">
+            <div className="flex items-center gap-2 text-white font-semibold">
+              <Smartphone className="w-4 h-4 text-accent" />
+              <span>HƯỚNG DẪN NHANH:</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold border border-accent/30">1</span>
+              <span>Bật <strong>Gỡ lỗi USB</strong> trên điện thoại Android</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold border border-accent/30">2</span>
+              <span>Chạy lệnh <code className="bg-primary-bg px-1 rounded text-emerald-400 font-mono text-[11px] border border-border-main">adb devices</code> để kiểm tra kết nối</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold border border-accent/30">3</span>
+              <span>Chạy <code className="bg-primary-bg px-1 rounded text-accent font-mono text-[11px] border border-border-main">export GEMINI_API_KEY="key"</code> để dùng AI</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1226,8 +1486,28 @@ export default function App() {
                       <p className="text-xs text-[#8b949e] leading-relaxed">{auditResult.summary}</p>
                     </div>
 
-                    <div className="flex items-center justify-between mt-2" id="findings-count-bar">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mt-2 border-b border-[#21262d] pb-2" id="findings-count-bar">
                       <span className="text-xs font-bold text-[#8b949e]">DANH SÁCH LỖ HỔNG PHÁT HIỆN ({auditResult.findings?.length || 0})</span>
+                      <div className="flex items-center gap-2" id="report-export-buttons">
+                        <button
+                          onClick={handleExportMarkdown}
+                          className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#ef4444] hover:text-[#ef4444]/80 border border-[#ef4444]/20 hover:border-[#ef4444]/40 transition-colors cursor-pointer font-mono"
+                          title="Xuất báo cáo định dạng Markdown (.md)"
+                          id="export-md-btn"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Xuất .MD</span>
+                        </button>
+                        <button
+                          onClick={handleExportHtml}
+                          className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-[#ef4444]/10 hover:bg-[#ef4444]/25 text-white hover:text-white border border-[#ef4444]/30 hover:border-[#ef4444]/50 transition-colors cursor-pointer font-mono"
+                          title="Xuất báo cáo HTML đồ họa đẹp mắt"
+                          id="export-html-btn"
+                        >
+                          <Download className="w-3.5 h-3.5 text-[#ef4444]" />
+                          <span>Xuất HTML</span>
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-1" id="findings-list">
