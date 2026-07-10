@@ -249,6 +249,58 @@ export default function App() {
   ]);
   const [isExecutingCmd, setIsExecutingCmd] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  const [terminalHeight, setTerminalHeight] = useState(320);
+  const [isDraggingTerminal, setIsDraggingTerminal] = useState(false);
+
+  useEffect(() => {
+    if (!isDraggingTerminal) return;
+
+    const originalUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newHeight = window.innerHeight - e.clientY;
+      const maxHeight = window.innerHeight * 0.85;
+      const minHeight = 110;
+      if (newHeight >= minHeight && newHeight <= maxHeight) {
+        setTerminalHeight(newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingTerminal(false);
+      document.body.style.userSelect = originalUserSelect;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      const clientY = e.touches[0].clientY;
+      const newHeight = window.innerHeight - clientY;
+      const maxHeight = window.innerHeight * 0.85;
+      const minHeight = 110;
+      if (newHeight >= minHeight && newHeight <= maxHeight) {
+        setTerminalHeight(newHeight);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      setIsDraggingTerminal(false);
+      document.body.style.userSelect = originalUserSelect;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      document.body.style.userSelect = originalUserSelect;
+    };
+  }, [isDraggingTerminal]);
 
   const handleExecuteCommand = async (cmdString: string) => {
     setShowTerminal(true);
@@ -938,9 +990,9 @@ export default function App() {
 
   return (
     <div 
-      className="min-h-screen bg-primary-bg text-txt-main flex flex-col selection:bg-accent/35 selection:text-white transition-[padding-bottom] duration-300" 
+      className={`min-h-screen bg-primary-bg text-txt-main flex flex-col selection:bg-accent/35 selection:text-white ${isDraggingTerminal ? "" : "transition-[padding-bottom] duration-300"}`} 
       id="app-root"
-      style={{ paddingBottom: showTerminal ? "320px" : "44px", ...activeThemeVars as React.CSSProperties }}
+      style={{ paddingBottom: showTerminal ? `${terminalHeight}px` : "44px", ...activeThemeVars as React.CSSProperties }}
     >
       {/* HEADER BAR */}
       <header className="border-b border-border-head bg-secondary-bg px-6 py-4 sticky top-0 z-50 shadow-md transition-all duration-300" id="header-bar">
@@ -1967,11 +2019,28 @@ export default function App() {
 
       {/* PERSISTENT KALI LIVE TERMINAL DRAWER */}
       <div 
-        className={`fixed bottom-0 left-0 right-0 bg-[#0d1117] border-t border-[#30363d] z-50 transition-all duration-300 flex flex-col ${
-          showTerminal ? "h-[320px]" : "h-11"
+        className={`fixed bottom-0 left-0 right-0 bg-[#0d1117] border-t border-[#30363d] z-50 flex flex-col ${
+          isDraggingTerminal ? "" : "transition-all duration-300"
         }`}
+        style={{ height: showTerminal ? `${terminalHeight}px` : "44px" }}
         id="kali-terminal-drawer"
       >
+        {/* Resize Drag Handle */}
+        {showTerminal && (
+          <div
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setIsDraggingTerminal(true);
+            }}
+            onTouchStart={() => {
+              setIsDraggingTerminal(true);
+            }}
+            className="absolute top-[-5px] left-0 right-0 h-[10px] cursor-ns-resize bg-transparent hover:bg-red-500/30 active:bg-red-500/50 transition-colors z-[60] flex items-center justify-center group"
+            title="Kéo để thay đổi chiều cao console"
+          >
+            <div className="w-16 h-[3px] bg-red-500/10 group-hover:bg-red-500/80 rounded transition-colors" />
+          </div>
+        )}
         {/* Header bar */}
         <div 
           onClick={() => setShowTerminal(!showTerminal)}
