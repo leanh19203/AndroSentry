@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { ADB_COMMANDS, APKTOOL_STEPS, FRIDA_SCRIPTS } from "./commandsData";
 import { AdbCommand, ManifestFinding, AuditResult, ChatMessage } from "./types";
+import { LANGUAGES, TRANSLATIONS, ADB_COMMANDS_TRANSLATIONS, APKTOOL_STEPS_TRANSLATIONS, FRIDA_SCRIPTS_TRANSLATIONS } from "./languages";
 
 export const THEME_CONFIGS = {
   "kali-dark": {
@@ -161,6 +162,12 @@ const SAMPLE_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
 </manifest>`;
 
 export default function App() {
+  const [language, setLanguage] = useState<string>(() => {
+    return localStorage.getItem("kali-android-pentest-lang") || "vi";
+  });
+
+  const t = TRANSLATIONS[language] || TRANSLATIONS["vi"];
+
   const [activeTab, setActiveTab] = useState<"adb" | "manifest" | "apktool" | "frida" | "chat">("adb");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -184,16 +191,52 @@ export default function App() {
   const [auditError, setAuditError] = useState<string | null>(null);
 
   // Chatbot State
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Xin chào! Tôi là Trợ lý AI Pentest Android trên Kali Linux. Bạn cần tôi hỗ trợ phân tích mã nguồn, tạo script bypass root/SSL pinning, viết payload, hay giải thích cơ chế bảo mật của Android?",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+
+  useEffect(() => {
+    if (chatMessages.length === 0 || (chatMessages.length === 1 && chatMessages[0].id === "welcome")) {
+      setChatMessages([
+        {
+          id: "welcome",
+          role: "assistant",
+          content: t.chatWelcomeMessage,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
     }
-  ]);
+  }, [language]);
+
   const [userChatInput, setUserChatInput] = useState("");
   const [isSendingChat, setIsSendingChat] = useState(false);
+
+  const getTranslatedAdbCommand = (cmd: any) => {
+    const tr = ADB_COMMANDS_TRANSLATIONS[language]?.[cmd.id];
+    return {
+      ...cmd,
+      title: tr?.title || cmd.title,
+      description: tr?.description || cmd.description,
+    };
+  };
+
+  const getTranslatedApktoolStep = (step: any) => {
+    const tr = APKTOOL_STEPS_TRANSLATIONS[language]?.[step.id];
+    return {
+      ...step,
+      title: tr?.title || step.title,
+      description: tr?.description || step.description,
+      tip: tr?.tip || step.tip,
+    };
+  };
+
+  const getTranslatedFridaScript = (script: any, idx: number) => {
+    const id = `frida-${idx + 1}`;
+    const tr = FRIDA_SCRIPTS_TRANSLATIONS[language]?.[id];
+    return {
+      ...script,
+      title: tr?.title || script.title,
+      description: tr?.description || script.description,
+    };
+  };
 
   // Terminal Emulator State
   const [terminalHistory, setTerminalHistory] = useState<{ command: string; output: string; isError: boolean; timestamp: string }[]>([
@@ -547,7 +590,7 @@ export default function App() {
       const response = await fetch("/api/audit-manifest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ manifestContent: manifestText }),
+        body: JSON.stringify({ manifestContent: manifestText, language }),
       });
 
       const data = await response.json();
@@ -836,7 +879,7 @@ export default function App() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, language }),
       });
 
       const data = await response.json();
@@ -908,9 +951,9 @@ export default function App() {
             </div>
             <div id="logo-text">
               <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                Kali Android Pentest GUI <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.1</span>
+                {t.title} <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.1</span>
               </h1>
-              <p className="text-xs text-txt-muted transition-colors duration-300">Hộp công cụ & Hỗ trợ kiểm thử bảo mật ứng dụng Android cho Kali Linux</p>
+              <p className="text-xs text-txt-muted transition-colors duration-300">{t.subtitle}</p>
             </div>
           </div>
  
@@ -924,7 +967,7 @@ export default function App() {
                 onChange={(e) => changeTheme(e.target.value)}
                 className="bg-transparent border-none text-white text-xs focus:ring-0 focus:outline-none font-medium cursor-pointer"
                 id="theme-select"
-                title="Thay đổi giao diện ứng dụng"
+                title={t.themeSelector}
               >
                 {Object.entries(THEME_CONFIGS).map(([key, config]) => (
                   <option key={key} value={key} className="bg-secondary-bg text-txt-main">
@@ -934,19 +977,41 @@ export default function App() {
               </select>
             </div>
 
+            {/* Language Selector */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-bg border border-border-main text-txt-muted hover:border-accent/40 transition-all duration-300" id="language-selector-container">
+              <span className="text-xs">{LANGUAGES.find(l => l.code === language)?.flag || "🇻🇳"}</span>
+              <select
+                value={language}
+                onChange={(e) => {
+                  const newLang = e.target.value;
+                  setLanguage(newLang);
+                  localStorage.setItem("kali-android-pentest-lang", newLang);
+                }}
+                className="bg-transparent border-none text-white text-xs focus:ring-0 focus:outline-none font-medium cursor-pointer"
+                id="language-select"
+                title="Language"
+              >
+                {LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code} className="bg-secondary-bg text-txt-main">
+                    {lang.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <button 
               onClick={handleOpenGuide}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600/15 hover:bg-emerald-600/35 border border-emerald-500/30 text-emerald-400 hover:text-white transition-all cursor-pointer font-medium" 
               id="view-guide-btn"
-              title="Xem hướng dẫn sử dụng ngay trên ứng dụng"
+              title={t.viewGuideTooltip}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Xem HDSD</span>
+              <span>{t.viewGuide}</span>
               <Eye className="w-3 h-3 opacity-70" />
             </button>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-bg border border-border-main" id="env-badge">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span className="text-txt-muted">Kali OS Emulator Mode</span>
+              <span className="text-txt-muted">{t.statusEmulator}</span>
             </div>
             {healthStatus.checked && (
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
@@ -955,7 +1020,7 @@ export default function App() {
                   : "bg-amber-500/10 border-amber-500/20 text-amber-400"
               }`} id="ai-status-badge">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>{healthStatus.aiConfigured ? "AI: Sẵn sàng" : "AI: Chưa cấu hình Key"}</span>
+                <span>{healthStatus.aiConfigured ? t.aiReady : t.aiNotConfigured}</span>
               </div>
             )}
           </div>
@@ -968,19 +1033,19 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-y-2 gap-x-6 w-full" id="local-pentest-checklist">
             <div className="flex items-center gap-2 text-white font-semibold">
               <Smartphone className="w-4 h-4 text-accent" />
-              <span>HƯỚNG DẪN NHANH:</span>
+              <span>{t.quickGuide}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold border border-accent/30">1</span>
-              <span>Bật <strong>Gỡ lỗi USB</strong> trên điện thoại Android</span>
+              <span>{parseInlineStyles(t.quickStep1)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold border border-accent/30">2</span>
-              <span>Chạy lệnh <code className="bg-primary-bg px-1 rounded text-emerald-400 font-mono text-[11px] border border-border-main">adb devices</code> để kiểm tra kết nối</span>
+              <span>{parseInlineStyles(t.quickStep2)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold border border-accent/30">3</span>
-              <span>Chạy <code className="bg-primary-bg px-1 rounded text-accent font-mono text-[11px] border border-border-main">export GEMINI_API_KEY="key"</code> để dùng AI</span>
+              <span>{parseInlineStyles(t.quickStep3)}</span>
             </div>
           </div>
         </div>
@@ -1001,7 +1066,7 @@ export default function App() {
             }`}
           >
             <Terminal className="w-4 h-4" />
-            <span>Trình tạo Lệnh ADB</span>
+            <span>{t.tabAdb}</span>
           </button>
 
           <button
@@ -1014,8 +1079,8 @@ export default function App() {
             }`}
           >
             <FileCode className="w-4 h-4" />
-            <span>AI Audit Manifest</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-normal">Trí Tuệ Nhân Tạo</span>
+            <span>{t.tabManifest}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-normal">{t.aiBadge}</span>
           </button>
 
           <button
@@ -1028,7 +1093,7 @@ export default function App() {
             }`}
           >
             <Layers className="w-4 h-4" />
-            <span>Quy trình Apktool</span>
+            <span>{t.tabApktool}</span>
           </button>
 
           <button
@@ -1041,7 +1106,7 @@ export default function App() {
             }`}
           >
             <Cpu className="w-4 h-4" />
-            <span>Thư viện Frida</span>
+            <span>{t.tabFrida}</span>
           </button>
 
           <button
@@ -1054,7 +1119,7 @@ export default function App() {
             }`}
           >
             <MessageSquare className="w-4 h-4" />
-            <span>Trợ lý AI Chatbot</span>
+            <span>{t.tabChat}</span>
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
           </button>
         </div>
@@ -1069,15 +1134,15 @@ export default function App() {
               <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-5" id="adb-params-card">
                 <div className="flex items-center gap-2 pb-4 mb-4 border-b border-[#21262d]" id="params-header">
                   <Smartphone className="w-5 h-5 text-red-500" />
-                  <h3 className="font-semibold text-white">Tham số mục tiêu</h3>
+                  <h3 className="font-semibold text-white">{t.paramTitle}</h3>
                 </div>
                 <p className="text-xs text-[#8b949e] mb-4">
-                  Thay đổi giá trị dưới đây để tự động cập nhật trực tiếp vào các khối mã lệnh ADB tương ứng bên phải.
+                  {t.paramSubtitle}
                 </p>
 
                 <div className="flex flex-col gap-4" id="adb-inputs">
                   <div className="flex flex-col gap-1.5" id="input-package">
-                    <label className="text-xs text-[#8b949e] font-mono">[PACKAGE_NAME] (Tên gói):</label>
+                    <label className="text-xs text-[#8b949e] font-mono">[PACKAGE_NAME] ({t.paramPackageLabel}):</label>
                     <input
                       type="text"
                       value={packageName}
@@ -1088,7 +1153,7 @@ export default function App() {
                   </div>
 
                   <div className="flex flex-col gap-1.5" id="input-activity">
-                    <label className="text-xs text-[#8b949e] font-mono">[ACTIVITY_NAME] (Activity):</label>
+                    <label className="text-xs text-[#8b949e] font-mono">[ACTIVITY_NAME] ({t.paramActivityLabel}):</label>
                     <input
                       type="text"
                       value={activityName}
@@ -1099,7 +1164,7 @@ export default function App() {
                   </div>
 
                   <div className="flex flex-col gap-1.5" id="input-action">
-                    <label className="text-xs text-[#8b949e] font-mono">[ACTION_NAME] (Intent Action):</label>
+                    <label className="text-xs text-[#8b949e] font-mono">[ACTION_NAME] ({t.paramActionLabel}):</label>
                     <input
                       type="text"
                       value={actionName}
@@ -1109,7 +1174,7 @@ export default function App() {
                   </div>
 
                   <div className="flex flex-col gap-1.5" id="input-apkpath">
-                    <label className="text-xs text-[#8b949e] font-mono">[APK_PATH_ON_DEVICE] (Đường dẫn APK):</label>
+                    <label className="text-xs text-[#8b949e] font-mono">[APK_PATH_ON_DEVICE] ({t.paramApkLabel}):</label>
                     <input
                       type="text"
                       value={apkPath}
@@ -1119,7 +1184,7 @@ export default function App() {
                   </div>
 
                   <div className="flex flex-col gap-1.5" id="input-filter">
-                    <label className="text-xs text-[#8b949e] font-mono">[FILTER_KEYWORD] (Từ khóa lọc log):</label>
+                    <label className="text-xs text-[#8b949e] font-mono">[FILTER_KEYWORD] ({t.paramFilterLabel}):</label>
                     <input
                       type="text"
                       value={filterKeyword}
@@ -1130,7 +1195,7 @@ export default function App() {
 
                   <div className="grid grid-cols-2 gap-3" id="input-ports-grid">
                     <div className="flex flex-col gap-1.5" id="input-localport">
-                      <label className="text-xs text-[#8b949e] font-mono">Cổng Kali:</label>
+                      <label className="text-xs text-[#8b949e] font-mono">{t.paramKaliPort}:</label>
                       <input
                         type="text"
                         value={localPort}
@@ -1139,7 +1204,7 @@ export default function App() {
                       />
                     </div>
                     <div className="flex flex-col gap-1.5" id="input-deviceport">
-                      <label className="text-xs text-[#8b949e] font-mono">Cổng Android:</label>
+                      <label className="text-xs text-[#8b949e] font-mono">{t.paramAndroidPort}:</label>
                       <input
                         type="text"
                         value={devicePort}
@@ -1153,13 +1218,13 @@ export default function App() {
 
               {/* Useful guide short summary */}
               <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-5 text-xs text-[#8b949e] flex flex-col gap-2.5" id="adb-helpful-tips">
-                <span className="font-semibold text-white uppercase text-[10px] tracking-wider text-red-400">Cách kết nối thiết bị với Kali Linux:</span>
+                <span className="font-semibold text-white uppercase text-[10px] tracking-wider text-red-400">{t.guideTitle}</span>
                 <ol className="list-decimal pl-4 flex flex-col gap-1.5">
-                  <li>Bật <strong className="text-white">Tùy chọn cho nhà phát triển</strong> trên điện thoại.</li>
-                  <li>Bật <strong className="text-white">Gỡ lỗi USB (USB Debugging)</strong>.</li>
-                  <li>Cắm cáp kết nối điện thoại với máy cài Kali Linux.</li>
-                  <li>Chấp nhận khóa vân tay RSA trên điện thoại khi có thông báo.</li>
-                  <li>Mở terminal trên Kali và dán lệnh kiểm tra kết nối đầu tiên.</li>
+                  <li>{t.guideStep1}</li>
+                  <li>{t.guideStep2}</li>
+                  <li>{t.guideStep3}</li>
+                  <li>{t.guideStep4}</li>
+                  <li>{t.guideStep5}</li>
                 </ol>
               </div>
             </div>
@@ -1171,12 +1236,12 @@ export default function App() {
                 <div className="bg-[#1f242c] px-5 py-3 border-b border-[#21262d] flex items-center justify-between" id="category-recon-header">
                   <div className="flex items-center gap-2">
                     <Search className="w-4.5 h-4.5 text-cyan-400" />
-                    <span className="font-semibold text-white text-sm">Thu Thập Thông Tin & Trinh Sát (Device Recon)</span>
+                    <span className="font-semibold text-white text-sm">{t.categoryRecon}</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-[#30363d] text-[#8b949e] font-mono">ADB SHELL</span>
                 </div>
                 <div className="divide-y divide-[#21262d]" id="recon-commands">
-                  {ADB_COMMANDS.filter(c => c.category === "recon").map(cmd => (
+                  {ADB_COMMANDS.filter(c => c.category === "recon").map(getTranslatedAdbCommand).map(cmd => (
                     <div key={cmd.id} className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-[#161b22]/40 transition-colors" id={`cmd-${cmd.id}`}>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -1192,16 +1257,16 @@ export default function App() {
                         <button
                           onClick={() => handleExecuteCommand(getProcessedCommand(cmd))}
                           className="p-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/20 hover:border-emerald-500/45 text-emerald-400 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
-                          title="Chạy lệnh trực tiếp trên Kali"
+                          title={t.runTooltip}
                           id={`run-btn-${cmd.id}`}
                         >
                           <Play className="w-3.5 h-3.5 fill-emerald-400" />
-                          <span>Chạy</span>
+                          <span>{t.runBtn}</span>
                         </button>
                         <button
                           onClick={() => handleCopy(getProcessedCommand(cmd), cmd.id)}
                           className="p-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
-                          title="Sao chép"
+                          title={t.copyTooltip}
                           id={`copy-btn-${cmd.id}`}
                         >
                           {copiedId === cmd.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -1217,12 +1282,12 @@ export default function App() {
                 <div className="bg-[#1f242c] px-5 py-3 border-b border-[#21262d] flex items-center justify-between" id="category-data-header">
                   <div className="flex items-center gap-2">
                     <FileCode className="w-4.5 h-4.5 text-orange-400" />
-                    <span className="font-semibold text-white text-sm">Trích Xuất Dữ Liệu & Sandbox Data Analysis</span>
+                    <span className="font-semibold text-white text-sm">{t.categoryData}</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-[#30363d] text-[#8b949e] font-mono">PULL / LOGCAT</span>
                 </div>
                 <div className="divide-y divide-[#21262d]" id="data-commands">
-                  {ADB_COMMANDS.filter(c => c.category === "data").map(cmd => (
+                  {ADB_COMMANDS.filter(c => c.category === "data").map(getTranslatedAdbCommand).map(cmd => (
                     <div key={cmd.id} className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-[#161b22]/40 transition-colors" id={`cmd-${cmd.id}`}>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -1238,16 +1303,16 @@ export default function App() {
                         <button
                           onClick={() => handleExecuteCommand(getProcessedCommand(cmd))}
                           className="p-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/20 hover:border-emerald-500/45 text-emerald-400 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
-                          title="Chạy lệnh trực tiếp trên Kali"
+                          title={t.runTooltip}
                           id={`run-btn-${cmd.id}`}
                         >
                           <Play className="w-3.5 h-3.5 fill-emerald-400" />
-                          <span>Chạy</span>
+                          <span>{t.runBtn}</span>
                         </button>
                         <button
                           onClick={() => handleCopy(getProcessedCommand(cmd), cmd.id)}
                           className="p-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
-                          title="Sao chép"
+                          title={t.copyTooltip}
                           id={`copy-btn-${cmd.id}`}
                         >
                           {copiedId === cmd.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -1263,12 +1328,12 @@ export default function App() {
                 <div className="bg-[#1f242c] px-5 py-3 border-b border-[#21262d] flex items-center justify-between" id="category-intent-header">
                   <div className="flex items-center gap-2">
                     <Terminal className="w-4.5 h-4.5 text-yellow-400" />
-                    <span className="font-semibold text-white text-sm">Gửi Intent & Khai Thác Thành Phần (Component Interception)</span>
+                    <span className="font-semibold text-white text-sm">{t.categoryIntent}</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-[#30363d] text-[#8b949e] font-mono">AM START / SEND</span>
                 </div>
                 <div className="divide-y divide-[#21262d]" id="intent-commands">
-                  {ADB_COMMANDS.filter(c => c.category === "intent").map(cmd => (
+                  {ADB_COMMANDS.filter(c => c.category === "intent").map(getTranslatedAdbCommand).map(cmd => (
                     <div key={cmd.id} className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-[#161b22]/40 transition-colors" id={`cmd-${cmd.id}`}>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -1284,16 +1349,16 @@ export default function App() {
                         <button
                           onClick={() => handleExecuteCommand(getProcessedCommand(cmd))}
                           className="p-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/20 hover:border-emerald-500/45 text-emerald-400 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
-                          title="Chạy lệnh trực tiếp trên Kali"
+                          title={t.runTooltip}
                           id={`run-btn-${cmd.id}`}
                         >
                           <Play className="w-3.5 h-3.5 fill-emerald-400" />
-                          <span>Chạy</span>
+                          <span>{t.runBtn}</span>
                         </button>
                         <button
                           onClick={() => handleCopy(getProcessedCommand(cmd), cmd.id)}
                           className="p-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
-                          title="Sao chép"
+                          title={t.copyTooltip}
                           id={`copy-btn-${cmd.id}`}
                         >
                           {copiedId === cmd.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -1309,12 +1374,12 @@ export default function App() {
                 <div className="bg-[#1f242c] px-5 py-3 border-b border-[#21262d] flex items-center justify-between" id="category-networking-header">
                   <div className="flex items-center gap-2">
                     <Cpu className="w-4.5 h-4.5 text-indigo-400" />
-                    <span className="font-semibold text-white text-sm">Chuyển tiếp & Phân tích Mạng (Networking & Tunneling)</span>
+                    <span className="font-semibold text-white text-sm">{t.categoryNetworking}</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-[#30363d] text-[#8b949e] font-mono">ADB PORT</span>
                 </div>
                 <div className="divide-y divide-[#21262d]" id="reverse-commands">
-                  {ADB_COMMANDS.filter(c => c.category === "reverse" || c.category === "shell").map(cmd => (
+                  {ADB_COMMANDS.filter(c => c.category === "reverse" || c.category === "shell").map(getTranslatedAdbCommand).map(cmd => (
                     <div key={cmd.id} className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-[#161b22]/40 transition-colors" id={`cmd-${cmd.id}`}>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -1330,16 +1395,16 @@ export default function App() {
                         <button
                           onClick={() => handleExecuteCommand(getProcessedCommand(cmd))}
                           className="p-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/20 hover:border-emerald-500/45 text-emerald-400 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
-                          title="Chạy lệnh trực tiếp trên Kali"
+                          title={t.runTooltip}
                           id={`run-btn-${cmd.id}`}
                         >
                           <Play className="w-3.5 h-3.5 fill-emerald-400" />
-                          <span>Chạy</span>
+                          <span>{t.runBtn}</span>
                         </button>
                         <button
                           onClick={() => handleCopy(getProcessedCommand(cmd), cmd.id)}
                           className="p-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
-                          title="Sao chép"
+                          title={t.copyTooltip}
                           id={`copy-btn-${cmd.id}`}
                         >
                           {copiedId === cmd.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -1364,21 +1429,21 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-[#21262d] pb-3" id="manifest-editor-header">
                   <div className="flex items-center gap-2">
                     <FileCode className="w-5 h-5 text-red-500" />
-                    <span className="font-semibold text-white">Nội dung AndroidManifest.xml</span>
+                    <span className="font-semibold text-white">{t.manifestEditorTitle}</span>
                   </div>
                   <button
                     onClick={() => setManifestText(SAMPLE_MANIFEST)}
                     className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
-                    title="Khôi phục lại tệp Manifest mẫu dễ bị tổn thương để thử nghiệm quét"
+                    title={t.manifestUseSampleTooltip}
                     id="reset-sample-btn"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Dùng tệp mẫu</span>
+                    <span>{t.manifestUseSampleBtn}</span>
                   </button>
                 </div>
 
                 <p className="text-xs text-[#8b949e]">
-                  Dán nội dung tệp tin AndroidManifest.xml thu thập được từ bước decompile APK để bắt đầu quét tự động bằng AI.
+                  {t.manifestEditorDesc}
                 </p>
 
                 <div className="relative font-mono text-sm" id="textarea-container">
@@ -1387,7 +1452,7 @@ export default function App() {
                     value={manifestText}
                     onChange={(e) => setManifestText(e.target.value)}
                     className="w-full h-[400px] bg-[#0d1117] border border-[#30363d] rounded-lg p-4 font-mono text-xs text-emerald-400 focus:outline-none focus:border-red-500 resize-y leading-relaxed"
-                    placeholder="Dán mã XML ở đây..."
+                    placeholder={t.manifestTextareaPlaceholder}
                   />
                 </div>
 
@@ -1397,7 +1462,7 @@ export default function App() {
                     className="px-4 py-2 text-xs border border-[#30363d] text-[#8b949e] hover:text-white rounded-lg hover:bg-[#21262d] transition-colors cursor-pointer"
                     id="clear-xml-btn"
                   >
-                    Xóa trắng
+                    {t.manifestClearBtn}
                   </button>
                   <button
                     id="run-audit-btn"
@@ -1408,12 +1473,12 @@ export default function App() {
                     {isAuditing ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>Đang phân tích bảo mật...</span>
+                        <span>{t.manifestAuditing}</span>
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 text-yellow-300" />
-                        <span>Kích hoạt AI Audit bảo mật</span>
+                        <span>{t.manifestAuditBtn}</span>
                       </>
                     )}
                   </button>
@@ -1427,11 +1492,11 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-[#21262d] pb-3 mb-4" id="result-header">
                   <div className="flex items-center gap-2">
                     <Shield className="w-5 h-5 text-emerald-400" />
-                    <span className="font-semibold text-white">Kết quả kiểm định bảo mật</span>
+                    <span className="font-semibold text-white">{t.manifestResultTitle}</span>
                   </div>
                   {auditResult && (
                     <div className="flex items-center gap-2" id="score-badge">
-                      <span className="text-xs text-[#8b949e]">Điểm bảo mật:</span>
+                      <span className="text-xs text-[#8b949e]">{t.manifestResultScoreLabel}</span>
                       <span className={`text-base font-bold font-mono px-2.5 py-0.5 rounded-lg ${
                         auditResult.score >= 80 
                           ? "bg-emerald-500/10 text-emerald-400" 
@@ -1449,9 +1514,9 @@ export default function App() {
                 {!isAuditing && !auditResult && !auditError && (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-[#8b949e] border border-dashed border-[#21262d] rounded-lg bg-[#0d1117]/30" id="empty-state">
                     <HelpCircle className="w-12 h-12 text-[#30363d] mb-3" />
-                    <p className="font-medium text-white mb-1 text-sm">Chưa có kết quả phân tích</p>
+                    <p className="font-medium text-white mb-1 text-sm">{t.manifestEmptyTitle}</p>
                     <p className="text-xs max-w-sm">
-                      Dán tệp tin Manifest của bạn vào ô bên trái và nhấp <strong>Kích hoạt AI Audit bảo mật</strong> để phân tích thông minh các lỗ hổng tiềm ẩn.
+                      {t.manifestEmptyDesc}
                     </p>
                   </div>
                 )}
@@ -1460,9 +1525,9 @@ export default function App() {
                 {isAuditing && (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-8" id="loading-state">
                     <div className="w-10 h-10 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin mb-4"></div>
-                    <p className="text-white font-medium text-sm">AI đang giải mã cấu hình Android...</p>
+                    <p className="text-white font-medium text-sm">{t.manifestLoadingTitle}</p>
                     <p className="text-xs text-[#8b949e] mt-1 max-w-xs">
-                      Phân tích các thẻ permission, exported activities, broadcast receivers, debug settings theo chuẩn bảo mật di động...
+                      {t.manifestLoadingDesc}
                     </p>
                   </div>
                 )}
@@ -1472,7 +1537,7 @@ export default function App() {
                   <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex gap-3" id="error-alert">
                     <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                     <div id="error-message">
-                      <p className="font-semibold">Đã xảy ra lỗi:</p>
+                      <p className="font-semibold">{t.manifestErrorTitle}</p>
                       <p className="text-xs text-red-300 mt-1">{auditError}</p>
                     </div>
                   </div>
@@ -1482,30 +1547,30 @@ export default function App() {
                 {auditResult && (
                   <div className="flex-1 flex flex-col gap-4" id="findings-container">
                     <div className="bg-[#1f242c] p-4 rounded-lg border border-[#21262d]" id="audit-summary">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1">Tóm tắt đánh giá:</h4>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1">{t.manifestSummaryTitle}</h4>
                       <p className="text-xs text-[#8b949e] leading-relaxed">{auditResult.summary}</p>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mt-2 border-b border-[#21262d] pb-2" id="findings-count-bar">
-                      <span className="text-xs font-bold text-[#8b949e]">DANH SÁCH LỖ HỔNG PHÁT HIỆN ({auditResult.findings?.length || 0})</span>
+                      <span className="text-xs font-bold text-[#8b949e]">{t.manifestFindingsListTitle} ({auditResult.findings?.length || 0})</span>
                       <div className="flex items-center gap-2" id="report-export-buttons">
                         <button
                           onClick={handleExportMarkdown}
                           className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#ef4444] hover:text-[#ef4444]/80 border border-[#ef4444]/20 hover:border-[#ef4444]/40 transition-colors cursor-pointer font-mono"
-                          title="Xuất báo cáo định dạng Markdown (.md)"
+                          title={t.exportMdTooltip}
                           id="export-md-btn"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          <span>Xuất .MD</span>
+                          <span>{t.exportMdBtn}</span>
                         </button>
                         <button
                           onClick={handleExportHtml}
                           className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-[#ef4444]/10 hover:bg-[#ef4444]/25 text-white hover:text-white border border-[#ef4444]/30 hover:border-[#ef4444]/50 transition-colors cursor-pointer font-mono"
-                          title="Xuất báo cáo HTML đồ họa đẹp mắt"
+                          title={t.exportHtmlTooltip}
                           id="export-html-btn"
                         >
                           <Download className="w-3.5 h-3.5 text-[#ef4444]" />
-                          <span>Xuất HTML</span>
+                          <span>{t.exportHtmlBtn}</span>
                         </button>
                       </div>
                     </div>
@@ -1523,19 +1588,19 @@ export default function App() {
                             <p className="text-xs text-[#8b949e] leading-relaxed mb-3">{finding.description}</p>
                             
                             <div className="text-[11px] font-mono bg-[#0d1117] px-2.5 py-1.5 rounded border border-[#21262d] text-[#8b949e] mb-3 flex items-center gap-1.5 overflow-x-auto" id="finding-location">
-                              <span className="text-red-400">Vị trí phát hiện:</span>
+                              <span className="text-red-400">{t.findingLocationLabel}:</span>
                               <span className="text-white">{finding.location}</span>
                             </div>
 
                             <div className="bg-[#0d1117]/50 rounded border border-[#21262d] p-3" id="finding-remediation">
-                              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">Cách khắc phục:</span>
+                              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">{t.findingRemediationLabel}:</span>
                               <p className="text-xs text-[#8b949e] whitespace-pre-wrap">{finding.remediation}</p>
                             </div>
                           </div>
                         ))
                       ) : (
                         <div className="text-center py-6 text-xs text-[#8b949e]" id="no-findings">
-                          🎉 Tuyệt vời! AI không phát hiện bất kỳ lỗ hổng bảo mật nghiêm trọng nào trong tệp Manifest này.
+                          🎉 {t.noFindingsMessage}
                         </div>
                       )}
                     </div>
@@ -1556,15 +1621,15 @@ export default function App() {
               <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-5" id="apktool-inputs-card">
                 <div className="flex items-center gap-2 pb-4 mb-4 border-b border-[#21262d]" id="apktool-inputs-header">
                   <Layers className="w-5 h-5 text-red-500" />
-                  <h3 className="font-semibold text-white">Biến đổi APK</h3>
+                  <h3 className="font-semibold text-white">{t.apktoolSidebarTitle}</h3>
                 </div>
                 <p className="text-xs text-[#8b949e] mb-4">
-                  Thiết lập tên tệp APK của bạn để tạo ra dòng lệnh biên dịch & ký số chính xác cho Kali Linux.
+                  {t.apktoolSidebarDesc}
                 </p>
 
                 <div className="flex flex-col gap-4" id="apktool-fields">
                   <div className="flex flex-col gap-1.5" id="apktool-name-field">
-                    <label className="text-xs text-[#8b949e] font-mono">Tên tệp APK gốc (Không bao gồm đuôi .apk):</label>
+                    <label className="text-xs text-[#8b949e] font-mono">{t.apktoolInputOrigLabel}</label>
                     <input
                       type="text"
                       value={apktoolFileName}
@@ -1575,7 +1640,7 @@ export default function App() {
                   </div>
 
                   <div className="flex flex-col gap-1.5" id="apktool-out-field">
-                    <label className="text-xs text-[#8b949e] font-mono">Thư mục đầu ra của Decompile:</label>
+                    <label className="text-xs text-[#8b949e] font-mono">{t.apktoolInputOutLabel}</label>
                     <input
                       type="text"
                       value={apktoolOutputDir}
@@ -1589,11 +1654,11 @@ export default function App() {
 
               {/* Reverse flow notes */}
               <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-5 text-xs text-[#8b949e] flex flex-col gap-3" id="reverse-flow-notes">
-                <span className="font-semibold text-white uppercase text-[10px] tracking-wider text-red-400">Các lỗi đóng gói thường gặp:</span>
+                <span className="font-semibold text-white uppercase text-[10px] tracking-wider text-red-400">{t.apktoolErrorsTitle}:</span>
                 <ul className="list-disc pl-4 flex flex-col gap-1.5">
-                  <li><strong className="text-white">Lỗi Build Resource:</strong> Sử dụng thêm cờ <code className="text-red-400 font-mono">-r</code> khi decompile nếu apktool bị crash do lỗi phân tích file resources.arsc.</li>
-                  <li><strong className="text-white">Lỗi chữ ký mã:</strong> Android 11 trở lên yêu cầu cấu trúc chữ ký V2 hoặc V3. Apksigner là bắt buộc (Jarsigner sẽ không hoạt động trên một số dòng máy mới).</li>
-                  <li><strong className="text-white">Zipalign:</strong> Luôn chạy zipalign trước khi ký để tối ưu hóa tệp APK và tránh lỗi cài đặt.</li>
+                  <li><strong className="text-white">{t.apktoolErrResourceLabel}</strong> {t.apktoolErrResourceDesc}</li>
+                  <li><strong className="text-white">{t.apktoolErrSignLabel}</strong> {t.apktoolErrSignDesc}</li>
+                  <li><strong className="text-white">{t.apktoolErrZipalignLabel}</strong> {t.apktoolErrZipalignDesc}</li>
                 </ul>
               </div>
             </div>
@@ -1602,12 +1667,12 @@ export default function App() {
             <div className="lg:col-span-8 flex flex-col gap-4" id="apktool-steps-panel">
               <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-5" id="apktool-steps-card">
                 <h3 className="font-semibold text-white border-b border-[#21262d] pb-3 mb-4 flex items-center justify-between">
-                  <span>Quy trình kỹ thuật đảo ngược APK & Vá Mã nguồn</span>
+                  <span>{t.apktoolStepsTitle}</span>
                   <span className="text-xs font-normal text-[#8b949e]">Kali Terminal Commands</span>
                 </h3>
 
                 <div className="flex flex-col gap-6" id="steps-timeline">
-                  {APKTOOL_STEPS.map((step, idx) => {
+                  {APKTOOL_STEPS.map(getTranslatedApktoolStep).map((step, idx) => {
                     // process step command in real-time
                     let finalCmd = step.command;
                     finalCmd = finalCmd.replace(/\[APK_NAME\]/g, apktoolFileName);
@@ -1641,16 +1706,16 @@ export default function App() {
                               <button
                                 onClick={() => handleExecuteCommand(finalCmd)}
                                 className="p-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/20 hover:border-emerald-500/45 text-emerald-400 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
-                                title="Chạy lệnh trực tiếp trên Kali"
+                                title={t.runTooltip}
                                 id={`step-run-btn-${step.id}`}
                               >
                                 <Play className="w-3 h-3 fill-emerald-400" />
-                                <span>Chạy</span>
+                                <span>{t.runBtn}</span>
                               </button>
                               <button
                                 onClick={() => handleCopy(finalCmd, step.id)}
                                 className="p-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
-                                title="Sao chép câu lệnh"
+                                title={t.copyTooltip}
                                 id={`step-copy-btn-${step.id}`}
                               >
                                 {copiedId === step.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1683,15 +1748,15 @@ export default function App() {
               <div className="border-b border-[#21262d] pb-4 mb-4" id="frida-header">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <Cpu className="w-5 h-5 text-red-500" />
-                  <span>Thư viện Frida Script Bypass nâng cao</span>
+                  <span>{t.fridaHeaderTitle}</span>
                 </h2>
                 <p className="text-xs text-[#8b949e] mt-1">
-                  Sử dụng Frida để thực hiện kiểm tra dynamic analysis (Hooking) trực tiếp vào máy ảo ART của Android khi ứng dụng đang chạy.
+                  {t.fridaHeaderDesc}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="frida-list-grid">
-                {FRIDA_SCRIPTS.map((script, idx) => (
+                {FRIDA_SCRIPTS.map(getTranslatedFridaScript).map((script, idx) => (
                   <div key={idx} className="bg-[#1c2128] border border-[#30363d] rounded-xl p-5 flex flex-col gap-3 justify-between" id={`frida-item-${idx}`}>
                     <div id={`frida-content-${idx}`}>
                       <h4 className="text-sm font-bold text-white flex items-center gap-2">
@@ -1707,7 +1772,7 @@ export default function App() {
                         <button
                           onClick={() => handleCopy(script.code, `frida-${idx}`)}
                           className="absolute top-2 right-2 p-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
-                          title="Sao chép toàn bộ mã nguồn"
+                          title={t.copyTooltip}
                           id={`frida-copy-${idx}`}
                         >
                           {copiedId === `frida-${idx}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1716,7 +1781,7 @@ export default function App() {
                     </div>
 
                     <div className="bg-[#0d1117] rounded-lg p-2 px-3 border border-[#21262d] text-[10px] font-mono text-[#8b949e] flex items-center justify-between mt-2" id={`frida-run-tip-${idx}`}>
-                      <span>Lệnh thực thi trên Kali:</span>
+                      <span>{t.fridaRunTip}</span>
                       <code className="text-cyan-400">frida -U -f {packageName} -l script.js</code>
                     </div>
                   </div>
@@ -1728,26 +1793,26 @@ export default function App() {
             <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-5" id="frida-setup-guide">
               <h4 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-red-500" />
-                <span>Cách khởi động Frida-Server trên Android:</span>
+                <span>{t.fridaSetupTitle}</span>
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs text-[#8b949e]" id="frida-setup-steps">
                 <div className="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]" id="frida-step-1">
-                  <span className="font-bold text-white block mb-1">Bước 1: Tải server</span>
-                  Tải <strong className="text-white">frida-server</strong> tương ứng với kiến trúc CPU của máy Android (thường là arm64) từ GitHub Frida Releases.
+                  <span className="font-bold text-white block mb-1">{t.fridaStep1Title}</span>
+                  {t.fridaStep1Desc}
                 </div>
                 <div className="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]" id="frida-step-2">
-                  <span className="font-bold text-white block mb-1">Bước 2: Push vào máy</span>
-                  Dùng lệnh:
+                  <span className="font-bold text-white block mb-1">{t.fridaStep2Title}</span>
+                  {t.fridaStep2Desc}
                   <code className="block mt-1 text-emerald-400 bg-[#161b22] p-1 rounded">adb push frida-server /data/local/tmp/</code>
                 </div>
                 <div className="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]" id="frida-step-3">
-                  <span className="font-bold text-white block mb-1">Bước 3: Cấp quyền chạy</span>
-                  Dùng lệnh:
+                  <span className="font-bold text-white block mb-1">{t.fridaStep3Title}</span>
+                  {t.fridaStep3Desc}
                   <code className="block mt-1 text-emerald-400 bg-[#161b22] p-1 rounded">adb shell "chmod 755 /data/local/tmp/frida-server"</code>
                 </div>
                 <div className="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]" id="frida-step-4">
-                  <span className="font-bold text-white block mb-1">Bước 4: Chạy server</span>
-                  Chạy quyền root:
+                  <span className="font-bold text-white block mb-1">{t.fridaStep4Title}</span>
+                  {t.fridaStep4Desc}
                   <code className="block mt-1 text-emerald-400 bg-[#161b22] p-1 rounded">adb shell "su -c '/data/local/tmp/frida-server &'"</code>
                 </div>
               </div>
@@ -1765,45 +1830,45 @@ export default function App() {
               <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-5" id="chat-info-card">
                 <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#21262d]" id="chat-info-header">
                   <Sparkles className="w-4.5 h-4.5 text-yellow-400" />
-                  <h3 className="font-semibold text-white">Chuyên gia AI Hacker</h3>
+                  <h3 className="font-semibold text-white">{t.chatAgentTitle}</h3>
                 </div>
                 <p className="text-xs text-[#8b949e] leading-relaxed mb-4">
-                  Trợ lý được tối ưu hóa đặc biệt cho kiểm thử xâm nhập bảo mật Android, có khả năng tạo nhanh các đoạn mã bypass, giải thích lý thuyết bảo mật và viết script frida tùy chỉnh.
+                  {t.chatAgentDesc}
                 </p>
 
                 <div className="flex flex-col gap-2.5" id="preset-buttons">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-red-400 block">Câu hỏi gợi ý:</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-red-400 block">{t.chatSuggestionsTitle}:</span>
                   
                   <button
-                    onClick={() => setUserChatInput("Hãy chỉ tôi cách dùng Frida để bypass SSL Pinning của ứng dụng Flutter?")}
+                    onClick={() => setUserChatInput(t.chatPreset1Query)}
                     className="w-full text-left p-2.5 rounded-lg bg-[#0d1117] hover:bg-[#21262d] border border-[#21262d] hover:border-[#30363d] text-xs text-[#c9d1d9] transition-all cursor-pointer"
                     id="preset-btn-1"
                   >
-                    🚀 Cách bypass SSL Pinning Flutter?
+                    🚀 {t.chatPreset1Text}
                   </button>
 
                   <button
-                    onClick={() => setUserChatInput("Lỗ hổng Android:exported=\"true\" là gì? Làm thế nào để khai thác và vá?")}
+                    onClick={() => setUserChatInput(t.chatPreset2Query)}
                     className="w-full text-left p-2.5 rounded-lg bg-[#0d1117] hover:bg-[#21262d] border border-[#21262d] hover:border-[#30363d] text-xs text-[#c9d1d9] transition-all cursor-pointer"
                     id="preset-btn-2"
                   >
-                    🔒 Giải thích lỗ hổng Exported Component?
+                    🔒 {t.chatPreset2Text}
                   </button>
 
                   <button
-                    onClick={() => setUserChatInput("Hướng dẫn tôi cách cài đặt và khởi động Drozer trên Kali Linux để pentest Android?")}
+                    onClick={() => setUserChatInput(t.chatPreset3Query)}
                     className="w-full text-left p-2.5 rounded-lg bg-[#0d1117] hover:bg-[#21262d] border border-[#21262d] hover:border-[#30363d] text-xs text-[#c9d1d9] transition-all cursor-pointer"
                     id="preset-btn-3"
                   >
-                    🛠️ Cách dùng Drozer trên Kali Linux?
+                    🛠️ {t.chatPreset3Text}
                   </button>
 
                   <button
-                    onClick={() => setUserChatInput("Viết giùm tôi một đoạn script Frida cơ bản để hook vào hàm 'checkPassword' trong class 'com.example.AuthClass' và in ra mật khẩu người dùng nhập vào.")}
+                    onClick={() => setUserChatInput(t.chatPreset4Query)}
                     className="w-full text-left p-2.5 rounded-lg bg-[#0d1117] hover:bg-[#21262d] border border-[#21262d] hover:border-[#30363d] text-xs text-[#c9d1d9] transition-all cursor-pointer"
                     id="preset-btn-4"
                   >
-                    🔑 Viết script Frida hook hàm đăng nhập?
+                    🔑 {t.chatPreset4Text}
                   </button>
                 </div>
               </div>
@@ -1818,7 +1883,7 @@ export default function App() {
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
                     <div>
                       <h4 className="text-sm font-bold text-white">Interactive Security Assistant</h4>
-                      <p className="text-[10px] text-[#8b949e]">Phản hồi từ Gemini-3.5-Flash (Security Agent)</p>
+                      <p className="text-[10px] text-[#8b949e]">{t.chatAgentSub}</p>
                     </div>
                   </div>
                   <button
@@ -1826,14 +1891,14 @@ export default function App() {
                       {
                         id: "welcome",
                         role: "assistant",
-                        content: "Cuộc trò chuyện đã được làm sạch. Tôi có thể giúp gì tiếp cho bạn trong việc phân tích bảo mật Android?",
+                        content: t.chatWelcomeMessage,
                         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                       }
                     ])}
                     className="text-xs text-[#8b949e] hover:text-white transition-colors cursor-pointer"
                     id="reset-chat-btn"
                   >
-                    Xóa lịch sử
+                    {t.chatClearHistoryBtn}
                   </button>
                 </div>
 
@@ -1841,7 +1906,7 @@ export default function App() {
                 <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-[#0d1117]/30" id="chat-messages-container">
                   {chatMessages.map((msg) => (
                     <div
-                      key={msg.id}
+                       key={msg.id}
                       className={`flex flex-col max-w-[85%] ${
                         msg.role === "user" ? "self-end items-end" : "self-start items-start"
                       }`}
@@ -1864,7 +1929,7 @@ export default function App() {
                   {/* AI Generating Indicator */}
                   {isSendingChat && (
                     <div className="self-start flex flex-col items-start max-w-[85%]" id="assistant-typing-indicator">
-                      <span className="text-[10px] text-[#8b949e] mb-1 font-mono">Đang phản hồi...</span>
+                      <span className="text-[10px] text-[#8b949e] mb-1 font-mono">{t.chatTyping}</span>
                       <div className="bg-[#21262d] text-[#8b949e] border border-[#30363d] rounded-xl rounded-tl-none p-3 px-4 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-bounce"></span>
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-bounce delay-100"></span>
@@ -1881,7 +1946,7 @@ export default function App() {
                     id="chat-input"
                     value={userChatInput}
                     onChange={(e) => setUserChatInput(e.target.value)}
-                    placeholder="Hãy hỏi tôi cách sử dụng adb, dịch ngược apk, viết script bypass,..."
+                    placeholder={t.chatInputPlaceholder}
                     className="flex-1 bg-[#0d1117] border border-[#30363d] rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
                   />
                   <button
@@ -1917,7 +1982,7 @@ export default function App() {
             <div className={`w-2 h-2 rounded-full ${isExecutingCmd ? "bg-amber-500 animate-ping" : "bg-emerald-500"}`}></div>
             <span className="text-xs font-bold text-white font-mono flex items-center gap-1.5">
               <Terminal className="w-3.5 h-3.5 text-red-500 animate-pulse" />
-              KALI INTERACTIVE CONSOLE {isExecutingCmd && <span className="text-[10px] text-amber-400 font-normal animate-pulse">(Đang thực thi...)</span>}
+              {t.termTitle} {isExecutingCmd && <span className="text-[10px] text-amber-400 font-normal animate-pulse">{t.termExecuting}</span>}
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -1929,10 +1994,10 @@ export default function App() {
               className="text-[10px] text-[#8b949e] hover:text-white font-mono bg-[#21262d] px-2 py-0.5 rounded border border-[#30363d] transition-colors"
               id="clear-terminal-history-btn"
             >
-              Xóa Logs
+              {t.termClearLogs}
             </button>
             <span className="text-xs text-[#8b949e] font-mono">
-              {showTerminal ? "▼ Thu nhỏ Console" : "▲ Mở rộng Console & Chạy Lệnh"}
+              {showTerminal ? t.termCollapse : t.termExpand}
             </span>
           </div>
         </div>
@@ -1941,7 +2006,7 @@ export default function App() {
         {showTerminal && (
           <div className="flex-1 overflow-y-auto p-4 font-mono text-xs text-[#c9d1d9] flex flex-col gap-3 bg-[#090d13]" id="terminal-logs-container">
             {terminalHistory.length === 0 ? (
-              <div className="text-[#8b949e] italic text-center py-8">Chưa có lệnh nào được chạy. Click "Chạy" trên bất kỳ nút lệnh nào phía trên để xem kết quả trực tiếp tại đây!</div>
+              <div className="text-[#8b949e] italic text-center py-8">{t.termEmptyState}</div>
             ) : (
               terminalHistory.map((item, index) => (
                 <div key={index} className="border-b border-[#21262d]/50 pb-2.5 last:border-b-0">
@@ -1969,7 +2034,7 @@ export default function App() {
             <span className="text-xs font-mono text-red-500 flex-shrink-0">kali@root:~#</span>
             <input 
               type="text"
-              placeholder="Nhập thủ công lệnh adb (ví dụ: adb devices, adb shell getprop)..."
+              placeholder={t.termPlaceholder}
               className="flex-1 bg-[#0d1117] border border-[#30363d] rounded px-3 py-1 text-xs text-white font-mono focus:outline-none focus:border-red-500"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -1981,7 +2046,7 @@ export default function App() {
                 }
               }}
             />
-            <span className="text-[10px] text-[#8b949e] font-mono">Nhấn Enter để chạy</span>
+            <span className="text-[10px] text-[#8b949e] font-mono">{t.termPressEnter}</span>
           </div>
         )}
       </div>
@@ -1990,10 +2055,10 @@ export default function App() {
       <footer className="border-t border-[#21262d] bg-[#161b22] py-4 px-6 text-center text-xs text-[#8b949e]" id="footer-bar">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2" id="footer-content">
           <p id="footer-copyright">
-            © 2026 Kali Android Pentest Graphical Assistant — Được thiết kế bởi Hacker Mũ Trắng.
+            {t.footerCopyright}
           </p>
           <p className="font-mono text-[10px]" id="disclaimer">
-            Cảnh báo: Chỉ sử dụng phần mềm cho các mục tiêu đã được cấp phép kiểm thử xâm nhập hợp pháp.
+            {t.footerDisclaimer}
           </p>
         </div>
       </footer>
@@ -2010,9 +2075,9 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                    Tài liệu Hướng dẫn sử dụng & Mô tả tính năng
+                    {t.guideModalTitle}
                   </h3>
-                  <p className="text-xs text-[#8b949e]">Chi tiết hướng dẫn cài đặt, quy trình kiểm thử và cơ chế bảo mật</p>
+                  <p className="text-xs text-[#8b949e]">{t.guideModalSubtitle}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -2023,10 +2088,10 @@ export default function App() {
                     isDownloadingGuideMd ? "bg-cyan-600/5 opacity-50 cursor-not-allowed" : "bg-cyan-600/10 hover:bg-cyan-600/35"
                   }`}
                   id="modal-download-md"
-                  title="Tải hướng dẫn dạng Markdown"
+                  title={t.guideDownloadMd}
                 >
                   <FileCode className="w-3.5 h-3.5" />
-                  <span>{isDownloadingGuideMd ? "Đang tải..." : "Tải tệp .md"}</span>
+                  <span>{isDownloadingGuideMd ? "..." : t.guideDownloadMd}</span>
                 </button>
                 <button
                   onClick={handleDownloadGuide}
@@ -2035,10 +2100,10 @@ export default function App() {
                     isDownloadingGuide ? "bg-red-600/5 opacity-50 cursor-not-allowed" : "bg-red-600/10 hover:bg-red-600/35"
                   }`}
                   id="modal-download-docx"
-                  title="Tải tệp tài liệu hướng dẫn Word (.docx)"
+                  title={t.guideDownloadDocx}
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>{isDownloadingGuide ? "Đang tải..." : "Tải tệp .docx"}</span>
+                  <span>{isDownloadingGuide ? "..." : t.guideDownloadDocx}</span>
                 </button>
                 <button
                   onClick={() => setIsGuideOpen(false)}
@@ -2055,7 +2120,7 @@ export default function App() {
               {isLoadingGuideContent ? (
                 <div className="h-full flex flex-col items-center justify-center py-20 gap-4">
                   <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
-                  <p className="text-sm text-[#8b949e] animate-pulse">Đang tải và đồng bộ tài liệu hướng dẫn...</p>
+                  <p className="text-sm text-[#8b949e] animate-pulse">{t.guideSyncing}</p>
                 </div>
               ) : (
                 <div className="max-w-3xl mx-auto pb-8">
@@ -2066,13 +2131,13 @@ export default function App() {
 
             {/* Modal Footer */}
             <div className="bg-secondary-bg border-t border-border-main px-6 py-3 flex items-center justify-between text-xs text-[#8b949e]" id="guide-modal-footer">
-              <span className="font-mono text-[10px]">Tài liệu chính thức v1.0.0</span>
+              <span className="font-mono text-[10px]">v1.0.0</span>
               <button
                 onClick={() => setIsGuideOpen(false)}
                 className="px-4 py-1.5 rounded-lg bg-primary-bg border border-border-main text-white hover:bg-[#30363d] transition-colors font-medium text-xs cursor-pointer"
                 id="close-guide-modal-footer-btn"
               >
-                Đóng hướng dẫn
+                {t.guideCloseBtn}
               </button>
             </div>
           </div>
