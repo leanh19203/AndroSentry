@@ -1,9 +1,10 @@
 # BỘ CÔNG CỤ ANDROSENTRY
 ## Tài liệu Giới thiệu, Mô tả và Hướng dẫn sử dụng chi tiết
 
-- **Được phát triển bởi:** Nhóm Nghiên cứu An toàn thông tin Android
+- **Được phát triển bởi:** Lê Đức Anh
 - **Phiên bản phần mềm:** v1.2.1
 - **Hệ điều hành hỗ trợ:** Windows 10/11, Kali Linux, Ubuntu
+- **Github:** https://github.com/leanh19203/AndroSentry
 
 ---
 

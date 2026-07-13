@@ -112,7 +112,7 @@ const createBulletParagraph = (children) => {
 
 // Khởi tạo tài liệu
 const doc = new Document({
-  creator: "Dự án AndroSentry",
+  creator: "Lê Đức Anh",
   title: "Tài liệu giới thiệu, mô tả và hướng dẫn sử dụng",
   description: "Tài liệu chi tiết về công cụ hỗ trợ kiểm thử xâm nhập thiết bị Android chạy trên Windows và Kali Linux.",
   sections: [
@@ -125,11 +125,13 @@ const doc = new Document({
         
         createBodyParagraph([
           createText("Được phát triển bởi: ", { bold: true }),
-          createText("Nhóm Nghiên cứu An toàn thông tin Android\n"),
+          createText("Lê Đức Anh\n"),
           createText("Phiên bản phần mềm: ", { bold: true }),
           createText("v1.2.1\n"),
           createText("Hệ điều hành hỗ trợ: ", { bold: true }),
-          createText("Windows 10/11, Kali Linux, Ubuntu"),
+          createText("Windows 10/11, Kali Linux, Ubuntu\n"),
+          createText("Github: ", { bold: true }),
+          createText("https://github.com/leanh19203/AndroSentry"),
         ], { before: 240, after: 480 }),
 
         // PHẦN I: GIỚI THIỆU TỔNG QUAN
