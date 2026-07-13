@@ -1,5 +1,5 @@
 {
-  "name": "Android Pentest Tool",
+  "name": "AndroSentry",
   "description": "A comprehensive Android pentesting assistant and GUI toolbox designed for security researchers and Kali Linux users, featuring ADB command generators, manifest static analysis, and an AI vulnerability auditor.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

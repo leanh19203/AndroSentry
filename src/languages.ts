@@ -12,7 +12,7 @@ export const LANGUAGES: LanguageConfig[] = [
 
 export const TRANSLATIONS: Record<string, any> = {
   vi: {
-    title: "Kali Android Pentest GUI",
+    title: "AndroSentry",
     subtitle: "Hộp công cụ & Hỗ trợ kiểm thử bảo mật ứng dụng Android cho Kali Linux",
     themeSelector: "Giao diện",
     viewGuide: "Xem HDSD",
@@ -201,9 +201,13 @@ export const TRANSLATIONS: Record<string, any> = {
     termPlaceholder: "Nhập thủ công lệnh adb (ví dụ: adb devices, adb shell getprop)...",
     termPressEnter: "Nhấn Enter để chạy",
     termEmptyState: "Chưa có lệnh nào được chạy. Click \"Chạy\" trên bất kỳ nút lệnh nào phía trên để xem kết quả trực tiếp tại đây!",
+    termSimToggle: "Mô phỏng",
+    termSimModeActive: "MÔ PHỎNG: Bật",
+    termSimModeInactive: "LIVE MODE (Cần Local)",
+    termSimNotice: "[MÔ PHỎNG] Đang giả lập lệnh pentest trên trình duyệt...",
     
     // Footer
-    footerCopyright: "© 2026 Kali Android Pentest Graphical Assistant — Được thiết kế bởi Hacker Mũ Trắng.",
+    footerCopyright: "© 2026 AndroSentry Graphical Assistant — Được thiết kế bởi Hacker Mũ Trắng.",
     footerDisclaimer: "Cảnh báo: Chỉ sử dụng phần mềm cho các mục tiêu đã được cấp phép kiểm thử xâm nhập hợp pháp.",
     
     // Guide Modal
@@ -215,7 +219,7 @@ export const TRANSLATIONS: Record<string, any> = {
     guideSyncing: "Đang tải và đồng bộ tài liệu hướng dẫn..."
   },
   en: {
-    title: "Kali Android Pentest GUI",
+    title: "AndroSentry",
     subtitle: "A comprehensive Android pentesting toolbox & assistant for Kali Linux users",
     themeSelector: "Theme",
     viewGuide: "View Guide",
@@ -404,9 +408,13 @@ export const TRANSLATIONS: Record<string, any> = {
     termPlaceholder: "Enter manual adb or terminal command (e.g. adb devices, adb shell getprop)...",
     termPressEnter: "Press Enter to run",
     termEmptyState: "No commands run yet. Click \"Run\" on any command block above to see terminal outputs here in real-time!",
+    termSimToggle: "Simulate",
+    termSimModeActive: "SIMULATE: ON",
+    termSimModeInactive: "LIVE MODE (Needs Local)",
+    termSimNotice: "[SIMULATE] Simulating pentest command in sandbox...",
     
     // Footer
-    footerCopyright: "© 2026 Kali Android Pentest Graphical Assistant — Designed by White Hat Hackers.",
+    footerCopyright: "© 2026 AndroSentry Graphical Assistant — Designed by White Hat Hackers.",
     footerDisclaimer: "Disclaimer: Use this software only on legally authorized targets. Unpermitted hacking is strictly illegal.",
     
     // Guide Modal
@@ -418,7 +426,7 @@ export const TRANSLATIONS: Record<string, any> = {
     guideSyncing: "Loading and synchronizing user manual content..."
   },
   ja: {
-    title: "Kali Android Pentest GUI",
+    title: "AndroSentry",
     subtitle: "Kali Linuxユーザー向けの包括的なAndroid脆弱性診断・ペンテスト支援ツール",
     themeSelector: "テーマ",
     viewGuide: "マニュアル表示",
@@ -607,9 +615,13 @@ export const TRANSLATIONS: Record<string, any> = {
     termPlaceholder: "手動でadbまたは端末コマンドを入力します (例: adb devices, adb shell getprop)...",
     termPressEnter: "Enterキーで実行",
     termEmptyState: "実行されたコマンドはありません。上のコマンドブロックの「実行」をクリックして、リアルタイムの出力をここに確認してください！",
+    termSimToggle: "シミュレート",
+    termSimModeActive: "シミュレーション: オン",
+    termSimModeInactive: "ライブモード (要ローカル)",
+    termSimNotice: "[シミュレーション] サンドボックス内でペンテストコマンドをシミュレート中...",
     
     // Footer
-    footerCopyright: "© 2026 Kali Android Pentest Graphical Assistant — ホワイトハットハッカーによる設計。",
+    footerCopyright: "© 2026 AndroSentry Graphical Assistant — ホワイトハットハッカーによる設計。",
     footerDisclaimer: "免責事項：認可された対象に対してのみ脆弱性テストを行ってください。無許可のハッキングは法律で厳しく禁止されています。",
     
     // Guide Modal

@@ -118,6 +118,25 @@ Chú ý: Chỉ trả về JSON thuần túy, không có mã markdown \`\`\`json 
   }
 });
 
+// Endpoint: Read Decompiled AndroidManifest.xml from server
+app.get("/api/get-decompiled-manifest", (req, res) => {
+  const outputDir = (req.query.outputDir as string) || "decompiled_src";
+  // Secure the path to avoid directory traversal
+  const safeDir = path.basename(outputDir);
+  const filePath = path.join(process.cwd(), safeDir, "AndroidManifest.xml");
+  
+  if (fs.existsSync(filePath)) {
+    try {
+      const content = fs.readFileSync(filePath, "utf-8");
+      res.json({ success: true, content });
+    } catch (err: any) {
+      res.status(500).json({ error: "Không thể đọc tệp AndroidManifest.xml.", details: err.message });
+    }
+  } else {
+    res.status(404).json({ error: `Không tìm thấy tệp AndroidManifest.xml tại thư mục '${safeDir}'. Vui lòng đảm bảo bạn đã chạy lệnh Decompile thành công trong tab Quy trình Apktool.` });
+  }
+});
+
 // Endpoint: AI Pentest Assistant Chatbot
 app.post("/api/chat", async (req, res) => {
   const { messages, language = "vi" } = req.body;
@@ -217,10 +236,10 @@ app.post("/api/execute-command", (req, res) => {
     req.ip === "::1" ||
     req.ip === "::ffff:127.0.0.1";
 
-  // If in production environment and not local, prevent execution
-  if (process.env.NODE_ENV === "production" && !isLocal) {
+  // Block execution if request is not originating from localhost (safety guard for public staging/Cloud Run and dev networks)
+  if (!isLocal) {
     res.status(403).json({
-      error: "Vì lý do bảo mật, tính năng thực thi lệnh trực tiếp bị vô hiệu hóa trên môi trường Cloud/Web công cộng. Hãy tải mã nguồn về và chạy trên Kali Linux của bạn (localhost) để kích hoạt toàn quyền điều khiển thiết bị!",
+      error: "Vì lý do bảo mật, tính năng thực thi lệnh trực tiếp bị vô hiệu hóa trên môi trường Cloud/Web công cộng hoặc môi trường mạng từ xa. Hãy tải mã nguồn về và chạy trên Kali Linux của bạn (localhost) để kích hoạt toàn quyền điều khiển thiết bị!",
       isLocal: false,
     });
     return;
@@ -270,8 +289,8 @@ app.post("/api/execute-command", (req, res) => {
     const firstWord = cleanSegment.split(/\s+/)[0];
     const binaryName = path.basename(firstWord).toLowerCase();
 
-    // Check if the binary is allowed
-    const isAllowed = allowedTools.some(tool => binaryName === tool || binaryName.startsWith(tool));
+    // Check if the binary is allowed using strict exact matching
+    const isAllowed = allowedTools.includes(binaryName);
 
     if (!isAllowed) {
       res.status(403).json({
@@ -304,21 +323,42 @@ app.post("/api/execute-command", (req, res) => {
 
 // Endpoint: Download User Guide Document (.docx)
 app.get("/api/download-guide", (req, res) => {
-  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx");
-  if (fs.existsSync(filePath)) {
-    res.setHeader("Content-Disposition", "attachment; filename=Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx");
+  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_AndroSentry.docx");
+  
+  const sendDocx = () => {
+    res.setHeader("Content-Disposition", "attachment; filename=Huong_Dan_Su_Dung_AndroSentry.docx");
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
     res.sendFile(filePath);
+  };
+
+  if (fs.existsSync(filePath)) {
+    sendDocx();
   } else {
-    res.status(404).json({ error: "Tệp hướng dẫn sử dụng không tồn tại. Vui lòng chạy lệnh tạo file trước." });
+    console.log("[DOCX] File not found. Triggering dynamic generation via generate-docx.js...");
+    exec("node generate-docx.js", (error, stdout, stderr) => {
+      if (error) {
+        console.error("[DOCX ERROR] Failed to generate DOCX dynamically:", error);
+        res.status(500).json({ 
+          error: "Không thể tự động tạo tệp tin báo cáo. Vui lòng liên hệ quản trị viên.",
+          details: error.message 
+        });
+      } else {
+        console.log("[DOCX SUCCESS] Dynamically generated docx successfully.");
+        if (fs.existsSync(filePath)) {
+          sendDocx();
+        } else {
+          res.status(404).json({ error: "Không tìm thấy tệp sau khi biên dịch động." });
+        }
+      }
+    });
   }
 });
 
 // Endpoint: Download User Guide Document (.md)
 app.get("/api/download-guide-md", (req, res) => {
-  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.md");
+  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_AndroSentry.md");
   if (fs.existsSync(filePath)) {
-    res.setHeader("Content-Disposition", "attachment; filename=Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.md");
+    res.setHeader("Content-Disposition", "attachment; filename=Huong_Dan_Su_Dung_AndroSentry.md");
     res.setHeader("Content-Type", "text/markdown; charset=utf-8");
     res.sendFile(filePath);
   } else {
@@ -328,7 +368,7 @@ app.get("/api/download-guide-md", (req, res) => {
 
 // Endpoint: Read User Guide Document (.md) for web display
 app.get("/api/read-guide", (req, res) => {
-  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.md");
+  const filePath = path.join(process.cwd(), "Huong_Dan_Su_Dung_AndroSentry.md");
   if (fs.existsSync(filePath)) {
     try {
       const content = fs.readFileSync(filePath, "utf-8");

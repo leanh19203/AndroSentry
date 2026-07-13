@@ -26,11 +26,13 @@ import {
   Download,
   BookOpen,
   Eye,
+  FolderOpen,
   X
 } from "lucide-react";
 import { ADB_COMMANDS, APKTOOL_STEPS, FRIDA_SCRIPTS } from "./commandsData";
 import { AdbCommand, ManifestFinding, AuditResult, ChatMessage } from "./types";
 import { LANGUAGES, TRANSLATIONS, ADB_COMMANDS_TRANSLATIONS, APKTOOL_STEPS_TRANSLATIONS, FRIDA_SCRIPTS_TRANSLATIONS } from "./languages";
+import { getSimulatedOutput } from "./simulation";
 
 export const THEME_CONFIGS = {
   "kali-dark": {
@@ -189,6 +191,7 @@ export default function App() {
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [auditError, setAuditError] = useState<string | null>(null);
+  const [isLoadingDecompiledManifest, setIsLoadingDecompiledManifest] = useState(false);
 
   // Chatbot State
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -251,6 +254,13 @@ export default function App() {
   const [showTerminal, setShowTerminal] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [isDraggingTerminal, setIsDraggingTerminal] = useState(false);
+  const [simulationMode, setSimulationMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      return !isLocal;
+    }
+    return true;
+  });
 
   useEffect(() => {
     if (!isDraggingTerminal) return;
@@ -308,13 +318,34 @@ export default function App() {
 
     const newHistoryItem = {
       command: cmdString,
-      output: " đang thực thi lệnh trên Kali Linux...",
+      output: simulationMode 
+        ? " [MÔ PHỎNG] Đang tính toán và giả lập kết quả lệnh..."
+        : " đang thực thi lệnh trên Kali Linux...",
       isError: false,
       timestamp: new Date().toLocaleTimeString()
     };
 
     setTerminalHistory(prev => [...prev, newHistoryItem]);
     const targetIdx = terminalHistory.length; // Index since we just appended one
+
+    if (simulationMode) {
+      // Simulate real delay for pentest output
+      setTimeout(() => {
+        const simResult = getSimulatedOutput(cmdString, language);
+        setTerminalHistory(prev => {
+          const copy = [...prev];
+          copy[targetIdx] = {
+            command: cmdString,
+            output: simResult.output,
+            isError: simResult.isError,
+            timestamp: new Date().toLocaleTimeString()
+          };
+          return copy;
+        });
+        setIsExecutingCmd(false);
+      }, 1000);
+      return;
+    }
 
     try {
       const response = await fetch("/api/execute-command", {
@@ -340,9 +371,14 @@ export default function App() {
             timestamp: new Date().toLocaleTimeString()
           };
         } else {
+          const isSecurityBlock = response.status === 403;
+          let output = `Lỗi: ${data.error || "Thực thi thất bại."}`;
+          if (isSecurityBlock) {
+            output += `\n\n💡 Mẹo: Bạn đang chạy trên môi trường Web đám mây. Hãy click bật nút "Mô phỏng" (Simulation Mode) màu đỏ ở góc bên phải thanh tiêu đề Console để trải nghiệm chạy thử nghiệm ảo cực kỳ mượt mà ngay bây giờ!`;
+          }
           copy[targetIdx] = {
             command: cmdString,
-            output: `Lỗi: ${data.error || "Thực thi thất bại."}`,
+            output: output,
             isError: true,
             timestamp: new Date().toLocaleTimeString()
           };
@@ -354,7 +390,7 @@ export default function App() {
         const copy = [...prev];
         copy[targetIdx] = {
           command: cmdString,
-          output: `Lỗi kết nối: ${err.message || "Không thể kết nối đến server Kali Localhost."}`,
+          output: `Lỗi kết nối: ${err.message || "Không thể kết nối đến server Kali Localhost."}\n\n💡 Mẹo: Nếu bạn đang truy cập trực tuyến, hãy click bật nút "Mô phỏng" (Simulation Mode) ở góc bên phải thanh tiêu đề Console để trải nghiệm chạy thử nghiệm ảo ngay lập tức!`,
           isError: true,
           timestamp: new Date().toLocaleTimeString()
         };
@@ -418,7 +454,7 @@ export default function App() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx";
+      a.download = "Huong_Dan_Su_Dung_AndroSentry.docx";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -442,7 +478,7 @@ export default function App() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.md";
+      a.download = "Huong_Dan_Su_Dung_AndroSentry.md";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -658,6 +694,24 @@ export default function App() {
     }
   };
 
+  const handleLoadDecompiledManifest = async () => {
+    setIsLoadingDecompiledManifest(true);
+    setAuditError(null);
+    try {
+      const response = await fetch(`/api/get-decompiled-manifest?outputDir=${encodeURIComponent(apktoolOutputDir)}`);
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setManifestText(data.content);
+      } else {
+        setAuditError(data.error || "Không thể tải tệp AndroidManifest.xml.");
+      }
+    } catch (err: any) {
+      setAuditError("Không thể kết nối đến máy chủ để đọc tệp Manifest.");
+    } finally {
+      setIsLoadingDecompiledManifest(false);
+    }
+  };
+
   const handleExportMarkdown = () => {
     if (!auditResult) return;
     
@@ -681,7 +735,7 @@ export default function App() {
       md += `🎉 Tuyệt vời! Không phát hiện bất kỳ lỗ hổng bảo mật nghiêm trọng nào.\n`;
     }
     
-    md += `\n*Báo cáo được tạo tự động bởi Kali Android Pentest GUI - Trí tuệ nhân tạo hỗ trợ White Hat Hacker.*\n`;
+    md += `\n*Báo cáo được tạo tự động bởi AndroSentry - Trí tuệ nhân tạo hỗ trợ White Hat Hacker.*\n`;
 
     const blob = new Blob([md], { type: "text/markdown;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -886,7 +940,7 @@ export default function App() {
         ${findingsHtml}
 
         <div class="footer">
-          Báo cáo bảo mật được kết xuất bởi Kali Android Pentest GUI - Trợ lý Kiểm thử Xâm nhập Di động Chuyên nghiệp.
+          Báo cáo bảo mật được kết xuất bởi AndroSentry - Trợ lý Kiểm thử Xâm nhập Di động Chuyên nghiệp.
         </div>
       </div>
     </body>
@@ -1003,7 +1057,7 @@ export default function App() {
             </div>
             <div id="logo-text">
               <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                {t.title} <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.1</span>
+                {t.title} <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.2.1</span>
               </h1>
               <p className="text-xs text-txt-muted transition-colors duration-300">{t.subtitle}</p>
             </div>
@@ -1483,15 +1537,31 @@ export default function App() {
                     <FileCode className="w-5 h-5 text-red-500" />
                     <span className="font-semibold text-white">{t.manifestEditorTitle}</span>
                   </div>
-                  <button
-                    onClick={() => setManifestText(SAMPLE_MANIFEST)}
-                    className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
-                    title={t.manifestUseSampleTooltip}
-                    id="reset-sample-btn"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>{t.manifestUseSampleBtn}</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleLoadDecompiledManifest}
+                      disabled={isLoadingDecompiledManifest}
+                      className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 disabled:text-emerald-800 transition-colors cursor-pointer"
+                      title="Đọc tệp AndroidManifest.xml trực tiếp từ thư mục bạn đã decompile ở tab Quy trình Apktool"
+                      id="load-decompiled-manifest-btn"
+                    >
+                      {isLoadingDecompiledManifest ? (
+                        <div className="w-3.5 h-3.5 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+                      ) : (
+                        <FolderOpen className="w-3.5 h-3.5" />
+                      )}
+                      <span>Đọc tệp đã Decompile</span>
+                    </button>
+                    <button
+                      onClick={() => setManifestText(SAMPLE_MANIFEST)}
+                      className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                      title={t.manifestUseSampleTooltip}
+                      id="reset-sample-btn"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{t.manifestUseSampleBtn}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <p className="text-xs text-[#8b949e]">
@@ -2055,6 +2125,22 @@ export default function App() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSimulationMode(!simulationMode);
+              }}
+              className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded border transition-all duration-300 flex items-center gap-1.5 ${
+                simulationMode 
+                  ? "bg-red-950/40 text-red-400 border-red-500/30 hover:bg-red-900/40" 
+                  : "bg-[#21262d] text-[#8b949e] border-[#30363d] hover:text-white"
+              }`}
+              id="toggle-simulation-mode-btn"
+              title="Chuyển đổi giữa chế độ chạy thật (Localhost) và chế độ mô phỏng ảo (Web)"
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${simulationMode ? "bg-red-500 animate-pulse" : "bg-[#8b949e]"}`} />
+              {simulationMode ? t.termSimModeActive : t.termSimModeInactive}
+            </button>
             <button 
               onClick={(e) => {
                 e.stopPropagation();
@@ -2074,6 +2160,12 @@ export default function App() {
         {/* Console logs */}
         {showTerminal && (
           <div className="flex-1 overflow-y-auto p-4 font-mono text-xs text-[#c9d1d9] flex flex-col gap-3 bg-[#090d13]" id="terminal-logs-container">
+            {simulationMode && (
+              <div className="bg-red-950/15 border border-red-900/25 text-red-400 px-3 py-1.5 rounded text-[10px] font-mono flex items-center gap-2 mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                <span>{t.termSimNotice}</span>
+              </div>
+            )}
             {terminalHistory.length === 0 ? (
               <div className="text-[#8b949e] italic text-center py-8">{t.termEmptyState}</div>
             ) : (
@@ -2200,7 +2292,7 @@ export default function App() {
 
             {/* Modal Footer */}
             <div className="bg-secondary-bg border-t border-border-main px-6 py-3 flex items-center justify-between text-xs text-[#8b949e]" id="guide-modal-footer">
-              <span className="font-mono text-[10px]">v1.0.0</span>
+              <span className="font-mono text-[10px]">v1.2.1</span>
               <button
                 onClick={() => setIsGuideOpen(false)}
                 className="px-4 py-1.5 rounded-lg bg-primary-bg border border-border-main text-white hover:bg-[#30363d] transition-colors font-medium text-xs cursor-pointer"

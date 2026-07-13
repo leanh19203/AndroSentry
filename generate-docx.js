@@ -112,7 +112,7 @@ const createBulletParagraph = (children) => {
 
 // Khởi tạo tài liệu
 const doc = new Document({
-  creator: "Dự án Kali Android Pentest GUI",
+  creator: "Dự án AndroSentry",
   title: "Tài liệu giới thiệu, mô tả và hướng dẫn sử dụng",
   description: "Tài liệu chi tiết về công cụ hỗ trợ kiểm thử xâm nhập thiết bị Android chạy trên Windows và Kali Linux.",
   sections: [
@@ -120,14 +120,14 @@ const doc = new Document({
       properties: {},
       children: [
         // TRANG BÌA & TIÊU ĐỀ
-        createTitle("BỘ CÔNG CỤ KALI ANDROID PENTEST GUI"),
+        createTitle("BỘ CÔNG CỤ ANDROSENTRY"),
         createSubtitle("Tài liệu Giới thiệu, Mô tả và Hướng dẫn sử dụng chi tiết"),
         
         createBodyParagraph([
           createText("Được phát triển bởi: ", { bold: true }),
           createText("Nhóm Nghiên cứu An toàn thông tin Android\n"),
           createText("Phiên bản phần mềm: ", { bold: true }),
-          createText("v1.0.0\n"),
+          createText("v1.2.1\n"),
           createText("Hệ điều hành hỗ trợ: ", { bold: true }),
           createText("Windows 10/11, Kali Linux, Ubuntu"),
         ], { before: 240, after: 480 }),
@@ -154,7 +154,7 @@ const doc = new Document({
         ]),
 
         createBodyParagraph([
-          createText("Kali Android Pentest GUI ", { bold: true, color: COLOR_PRIMARY }),
+          createText("AndroSentry ", { bold: true, color: COLOR_PRIMARY }),
           createText("ra đời như một giải pháp đột phá, mang đến một giao diện đồ họa trực quan (GUI) hiện đại, tinh gọn và an toàn. Công cụ giúp tự động hóa toàn bộ quy trình kiểm thử xâm nhập thiết bị Android, rút ngắn thời gian thao tác từ hàng giờ xuống chỉ còn vài cú click chuột, cực kỳ phù hợp cho cả học viên mới bắt đầu lẫn các chuyên gia pentest chuyên nghiệp."),
         ]),
 
@@ -261,7 +261,7 @@ const doc = new Document({
           createText(" và chọn OK."),
         ]),
         createBulletParagraph([
-          createText("Mở ứng dụng Kali Android Pentest GUI, tại góc trên cùng bên trái, nhấp chọn nút "),
+          createText("Mở ứng dụng AndroSentry, tại góc trên cùng bên trái, nhấp chọn nút "),
           createText("Làm mới thiết bị (Refresh Devices)", { bold: true }),
           createText(". Tên thiết bị của bạn sẽ xuất hiện kèm theo trạng thái "),
           createText("device", { bold: true, color: "008000" }),
@@ -327,7 +327,7 @@ const doc = new Document({
         ]),
         
         createBodyParagraph([
-          createText("\n© 2026 Kali Android Pentest GUI Project. All Rights Reserved.", { size: 18, color: COLOR_MUTED, italics: true }),
+          createText("\n© 2026 AndroSentry Project. All Rights Reserved.", { size: 18, color: COLOR_MUTED, italics: true }),
         ], { before: 240, after: 120 }),
       ]
     }
@@ -336,8 +336,8 @@ const doc = new Document({
 
 // Biên dịch tài liệu thành tệp tin .docx
 Packer.toBuffer(doc).then((buffer) => {
-  fs.writeFileSync("Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx", buffer);
-  console.log("[SUCCESS] Đã tạo thành công tệp tin tài liệu: Huong_Dan_Su_Dung_Kali_Android_Pentest_GUI.docx");
+  fs.writeFileSync("Huong_Dan_Su_Dung_AndroSentry.docx", buffer);
+  console.log("[SUCCESS] Đã tạo thành công tệp tin tài liệu: Huong_Dan_Su_Dung_AndroSentry.docx");
 }).catch((err) => {
   console.error("[ERROR] Lỗi khi tạo file docx:", err);
 });
