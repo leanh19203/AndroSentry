@@ -36,7 +36,7 @@ import { getSimulatedOutput } from "./simulation";
 
 export const THEME_CONFIGS = {
   "kali-dark": {
-    name: "Kali Cyber (Mặc định)",
+    name: "Kali Cyber",
     variables: {
       "--bg-primary": "#0d1117",
       "--bg-secondary": "#161b22",
@@ -51,7 +51,7 @@ export const THEME_CONFIGS = {
     }
   },
   "nord-tech": {
-    name: "Nord Operator (Xanh Băng)",
+    name: "Nord Operator",
     variables: {
       "--bg-primary": "#2e3440",
       "--bg-secondary": "#3b4252",
@@ -66,7 +66,7 @@ export const THEME_CONFIGS = {
     }
   },
   "dracula": {
-    name: "Dracula (Huyền Bí)",
+    name: "Dracula",
     variables: {
       "--bg-primary": "#1e1f29",
       "--bg-secondary": "#282a36",
@@ -81,7 +81,7 @@ export const THEME_CONFIGS = {
     }
   },
   "matrix-forest": {
-    name: "Matrix Code (Đặc Vụ)",
+    name: "Matrix Code",
     variables: {
       "--bg-primary": "#020503",
       "--bg-secondary": "#091008",
@@ -96,7 +96,7 @@ export const THEME_CONFIGS = {
     }
   },
   "white-hat": {
-    name: "White Hat (Chuyên Gia)",
+    name: "White Hat",
     variables: {
       "--bg-primary": "#f8fafc",
       "--bg-secondary": "#ffffff",

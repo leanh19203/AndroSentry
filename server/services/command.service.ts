@@ -23,15 +23,35 @@ export const ALLOWED_TOOLS = [
   "grep"
 ];
 
-// Helper to validate that a file path or directory is safe (no directory traversal, no root access)
+// Helper to validate that a file path or directory is safe (no directory traversal, no root access, strictly within workspace)
 function isSafePath(p: string): boolean {
   if (!p) return true;
-  // Prevent directory traversal or absolute paths that touch critical system paths
-  if (p.includes("..") || p.startsWith("/") && !p.startsWith("/sdcard") && !p.startsWith("/data/data/")) {
+
+  // Prevent directory traversal attempts
+  if (p.includes("..")) {
     return false;
   }
-  // Only allow typical path characters
-  return /^[a-zA-Z0-9_\-\.\/:\*\s]+$/.test(p);
+
+  // Device-specific paths (ADB context) are allowed but sanitized
+  if (p.startsWith("/sdcard") || p.startsWith("/data/data/")) {
+    return /^[a-zA-Z0-9_\-\.\/:\s]+$/.test(p);
+  }
+
+  // Local absolute paths must be strictly within the workspace process.cwd()
+  if (p.startsWith("/")) {
+    try {
+      const resolved = path.resolve(p);
+      const cwd = process.cwd();
+      if (!resolved.startsWith(cwd)) {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Only allow typical safe path characters. Explicitly remove '*' to block glob/wildcard exploits.
+  return /^[a-zA-Z0-9_\-\.\/:\s]+$/.test(p);
 }
 
 // Helper to validate package names (e.g. com.example.app)

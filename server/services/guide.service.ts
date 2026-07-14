@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 
 export function getDecompiledManifest(outputDir: string): { success: boolean; content?: string; error?: string } {
   const safeDir = path.basename(outputDir);
@@ -84,7 +84,7 @@ export function generateAndGetGuideDocxPath(): Promise<string> {
     }
 
     console.log("[DOCX SERVICE] File not found. Triggering dynamic generation via generate-docx.js...");
-    exec("node generate-docx.js", (error) => {
+    execFile("node", ["generate-docx.js"], (error) => {
       if (error) {
         console.error("[DOCX SERVICE ERROR] Failed to generate DOCX dynamically:", error);
         reject(new Error("Không thể tự động tạo tệp tin báo cáo. Vui lòng liên hệ quản trị viên."));
