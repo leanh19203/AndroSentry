@@ -186,6 +186,28 @@ export default function App() {
   const [apktoolFileName, setApktoolFileName] = useState("app_target");
   const [apktoolOutputDir, setApktoolOutputDir] = useState("decompiled_src");
 
+  // Task Queue & Workspace Isolation State (Phase 4 Integration)
+  const [tasksList, setTasksList] = useState<any[]>([]);
+  const [selectedQueueTask, setSelectedQueueTask] = useState<any | null>(null);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch("/api/tasks");
+      if (response.ok) {
+        const data = await response.json();
+        setTasksList(data);
+      }
+    } catch (err) {
+      console.error("Error fetching task queue:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+    const interval = setInterval(fetchTasks, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Manifest Audit State
   const [manifestText, setManifestText] = useState(SAMPLE_MANIFEST);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -1856,6 +1878,180 @@ export default function App() {
                     );
                   })}
                 </div>
+              </div>
+            </div>
+
+            {/* Task Queue & Workspace Status (Phase 4 Integration) */}
+            <div className="lg:col-span-12 bg-[#161b22] border border-[#21262d] rounded-xl p-5 mt-4" id="task-queue-card">
+              <h3 className="font-semibold text-white border-b border-[#21262d] pb-3 mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-red-500 animate-pulse" />
+                  <span>Hàng đợi Tác vụ & Cô lập Workspace (Task Queue & Workspace Isolation)</span>
+                </div>
+                <button
+                  onClick={fetchTasks}
+                  className="p-1 rounded hover:bg-[#21262d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
+                  title="Làm mới hàng đợi"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </h3>
+
+              <div className="text-xs text-[#8b949e] mb-4 leading-relaxed">
+                Các tiến trình nặng (như <code className="text-red-400 font-mono">apktool</code>, <code className="text-red-400 font-mono">jadx</code>) được tự động điều phối qua hàng đợi bất đồng bộ nhằm tối ưu hiệu năng tài nguyên. Mỗi phiên chạy được cấp một không gian làm việc cô lập (<code className="text-cyan-400 font-mono">Workspace Isolation</code>) dạng <code className="text-cyan-400 font-mono">workspaces/task-id</code> nhằm ngăn chặn xung đột ghi đè tệp tin và đảm bảo tính đồng thời.
+              </div>
+
+              {tasksList.length === 0 ? (
+                <div className="text-center py-6 text-[#8b949e] text-xs border border-dashed border-[#21262d] rounded-lg">
+                  Chưa ghi nhận tác vụ nặng nào hoạt động. Hãy kích hoạt quy trình dịch ngược Apktool ở trên để quan sát.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-[#21262d] text-[#8b949e] font-mono text-[10px] uppercase">
+                        <th className="py-2 px-3">ID Tác vụ</th>
+                        <th className="py-2 px-3">Lệnh hệ thống</th>
+                        <th className="py-2 px-3">Trạng thái</th>
+                        <th className="py-2 px-3">Thư mục Workspace</th>
+                        <th className="py-2 px-3 text-right">Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tasksList.slice(0, 5).map((task) => (
+                        <tr key={task.id} className="border-b border-[#21262d] hover:bg-[#1c2128]/50 transition-colors">
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-gray-400">
+                            task-{task.id.slice(0, 8)}...
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-emerald-400 truncate max-w-[240px]" title={task.command}>
+                            {task.command}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            {task.status === "pending" && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-medium">
+                                Đang chờ (Pending)
+                              </span>
+                            )}
+                            {task.status === "running" && (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                Đang xử lý
+                              </span>
+                            )}
+                            {task.status === "completed" && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                                Thành công
+                              </span>
+                            )}
+                            {task.status === "failed" && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 font-medium">
+                                Lỗi thực thi
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-[10px] text-cyan-400">
+                            workspaces/task-{task.id.slice(0, 6)}...
+                          </td>
+                          <td className="py-2.5 px-3 text-right">
+                            <button
+                              onClick={() => setSelectedQueueTask(task)}
+                              className="px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] hover:text-white transition-colors text-[11px] cursor-pointer"
+                            >
+                              Xem Nhật ký (Logs)
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* Selected Task Details Modal (Task Queue Logs) */}
+        {selectedQueueTask && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in" id="task-logs-modal">
+            <div className="bg-[#161b22] border border-[#30363d] rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl" id="task-logs-modal-container">
+              {/* Header */}
+              <div className="p-4 border-b border-[#21262d] flex justify-between items-center" id="task-logs-header">
+                <div>
+                  <h3 className="font-bold text-white text-sm">Nhật ký Tác vụ: task-{selectedQueueTask.id.slice(0, 12)}</h3>
+                  <p className="text-xs text-[#8b949e] font-mono mt-0.5">Workspace: {selectedQueueTask.workspaceDir}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedQueueTask(null)}
+                  className="p-1 rounded hover:bg-[#21262d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Info Bar */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-[#0d1117] border-b border-[#21262d] text-[11px]">
+                <div>
+                  <span className="text-[#8b949e] block">Trạng thái:</span>
+                  <strong className="text-white capitalize">{selectedQueueTask.status}</strong>
+                </div>
+                <div>
+                  <span className="text-[#8b949e] block">Mã thoát (Exit Code):</span>
+                  <strong className="text-white">{selectedQueueTask.code !== null ? selectedQueueTask.code : "N/A"}</strong>
+                </div>
+                <div>
+                  <span className="text-[#8b949e] block">Khởi tạo:</span>
+                  <strong className="text-white">{new Date(selectedQueueTask.createdAt).toLocaleTimeString()}</strong>
+                </div>
+                <div>
+                  <span className="text-[#8b949e] block">Thực thi:</span>
+                  <strong className="text-white">
+                    {selectedQueueTask.startedAt ? new Date(selectedQueueTask.startedAt).toLocaleTimeString() : "N/A"}
+                  </strong>
+                </div>
+              </div>
+
+              {/* Logs terminal area */}
+              <div className="flex-1 overflow-y-auto p-4 bg-[#0d1117] font-mono text-xs text-gray-300 flex flex-col gap-3 min-h-[300px]">
+                <div>
+                  <span className="text-red-500">$ </span>
+                  <span className="text-yellow-500">{selectedQueueTask.originalCommand}</span>
+                </div>
+                
+                {selectedQueueTask.stdout && (
+                  <div className="whitespace-pre-wrap">
+                    <span className="text-[#8b949e] block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">Bộ nhớ đệm đầu ra (STDOUT)</span>
+                    {selectedQueueTask.stdout}
+                  </div>
+                )}
+
+                {selectedQueueTask.stderr && (
+                  <div className="whitespace-pre-wrap text-red-400">
+                    <span className="text-[#8b949e] block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">Thông báo lỗi (STDERR)</span>
+                    {selectedQueueTask.stderr}
+                  </div>
+                )}
+
+                {selectedQueueTask.error && (
+                  <div className="whitespace-pre-wrap text-red-500 font-bold">
+                    <span className="text-red-500 block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">Lỗi hệ thống</span>
+                    {selectedQueueTask.error}
+                  </div>
+                )}
+
+                {!selectedQueueTask.stdout && !selectedQueueTask.stderr && !selectedQueueTask.error && (
+                  <div className="text-gray-500 italic">Đang chờ hệ thống ghi nhật ký thời gian thực...</div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-3 border-t border-[#21262d] flex justify-end" id="task-logs-footer">
+                <button
+                  onClick={() => setSelectedQueueTask(null)}
+                  className="px-4 py-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-white transition-colors text-xs cursor-pointer"
+                >
+                  Đóng
+                </button>
               </div>
             </div>
           </div>
