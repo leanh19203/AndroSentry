@@ -216,7 +216,40 @@ export const TRANSLATIONS: Record<string, any> = {
     guideDownloadMd: "Tải tệp .md",
     guideDownloadDocx: "Tải tệp .docx",
     guideCloseBtn: "Đóng hướng dẫn",
-    guideSyncing: "Đang tải và đồng bộ tài liệu hướng dẫn..."
+    guideSyncing: "Đang tải và đồng bộ tài liệu hướng dẫn...",
+
+    // Task Queue & Workspace
+    queueTitle: "Hàng đợi Tác vụ & Cô lập Workspace",
+    queueRefreshTooltip: "Làm mới hàng đợi",
+    queueDescText1: "Các tiến trình nặng (như ",
+    queueDescText2: " và ",
+    queueDescText3: ") được tự động điều phối qua hàng đợi bất đồng bộ nhằm tối ưu hiệu năng tài nguyên. Mỗi phiên chạy được cấp một không gian làm việc cô lập (",
+    queueDescText4: ") dạng ",
+    queueDescText5: " nhằm ngăn chặn xung đột ghi đè tệp tin và đảm bảo tính đồng thời.",
+    queueEmpty: "Chưa ghi nhận tác vụ nặng nào hoạt động. Hãy kích hoạt quy trình dịch ngược Apktool ở trên để quan sát.",
+    queueThId: "ID Tác vụ",
+    queueThCmd: "Lệnh hệ thống",
+    queueThStatus: "Trạng thái",
+    queueThWorkspace: "Thư mục Workspace",
+    queueThActions: "Hành động",
+    queueStatusPending: "Đang chờ (Pending)",
+    queueStatusRunning: "Đang xử lý",
+    queueStatusCompleted: "Thành công",
+    queueStatusFailed: "Lỗi thực thi",
+    queueActionViewLogs: "Xem Nhật ký (Logs)",
+
+    // Logs Modal
+    logsModalTitle: "Nhật ký Tác vụ:",
+    logsModalWorkspace: "Workspace:",
+    logsModalStatus: "Trạng thái:",
+    logsModalExitCode: "Mã thoát (Exit Code):",
+    logsModalCreatedAt: "Khởi tạo:",
+    logsModalStartedAt: "Thực thi:",
+    logsModalStdout: "Bộ nhớ đệm đầu ra (STDOUT)",
+    logsModalStderr: "Thông báo lỗi (STDERR)",
+    logsModalSysError: "Lỗi hệ thống",
+    logsModalWaiting: "Đang chờ hệ thống ghi nhật ký thời gian thực...",
+    logsModalCloseBtn: "Đóng"
   },
   en: {
     title: "AndroSentry",
@@ -423,7 +456,40 @@ export const TRANSLATIONS: Record<string, any> = {
     guideDownloadMd: "Download .md",
     guideDownloadDocx: "Download .docx",
     guideCloseBtn: "Close Manual",
-    guideSyncing: "Loading and synchronizing user manual content..."
+    guideSyncing: "Loading and synchronizing user manual content...",
+
+    // Task Queue & Workspace
+    queueTitle: "Task Queue & Workspace Isolation",
+    queueRefreshTooltip: "Refresh queue",
+    queueDescText1: "Heavy background processes (such as ",
+    queueDescText2: " and ",
+    queueDescText3: ") are automatically dispatched through an asynchronous queue to optimize resource performance. Each session is allocated an isolated workspace (",
+    queueDescText4: ") under ",
+    queueDescText5: " to prevent file conflicts and ensure concurrency.",
+    queueEmpty: "No heavy tasks currently running. Start the Apktool decompilation process above to observe.",
+    queueThId: "Task ID",
+    queueThCmd: "System Command",
+    queueThStatus: "Status",
+    queueThWorkspace: "Workspace Directory",
+    queueThActions: "Actions",
+    queueStatusPending: "Pending",
+    queueStatusRunning: "Running",
+    queueStatusCompleted: "Completed",
+    queueStatusFailed: "Failed",
+    queueActionViewLogs: "View Logs",
+
+    // Logs Modal
+    logsModalTitle: "Task Logs:",
+    logsModalWorkspace: "Workspace:",
+    logsModalStatus: "Status:",
+    logsModalExitCode: "Exit Code:",
+    logsModalCreatedAt: "Created At:",
+    logsModalStartedAt: "Executed At:",
+    logsModalStdout: "Standard Output (STDOUT)",
+    logsModalStderr: "Error Messages (STDERR)",
+    logsModalSysError: "System Error",
+    logsModalWaiting: "Waiting for real-time logs from the system...",
+    logsModalCloseBtn: "Close"
   },
   ja: {
     title: "AndroSentry",
@@ -630,7 +696,40 @@ export const TRANSLATIONS: Record<string, any> = {
     guideDownloadMd: ".mdダウンロード",
     guideDownloadDocx: ".docxダウンロード",
     guideCloseBtn: "マニュアルを閉じる",
-    guideSyncing: "マニュアルファイルを同期・読込中..."
+    guideSyncing: "マニュアルファイルを同期・読込中...",
+
+    // Task Queue & Workspace
+    queueTitle: "タスクキュー & ワークスペース分離",
+    queueRefreshTooltip: "キューを更新",
+    queueDescText1: "負荷の高いプロセス (",
+    queueDescText2: " や ",
+    queueDescText3: " など) は、リソース性能を最適化するために非同期キューを介して自動的にスケジュールされます。各セッションには、ファイルの衝突を防ぎ、並行性を確保するために、",
+    queueDescText4: " 形式の分離されたワークスペース (",
+    queueDescText5: ") が割り当てられます。",
+    queueEmpty: "現在実行中の重いタスクはありません。上のApktoolデコンパイルプロセスを実行して確認してください。",
+    queueThId: "タスクID",
+    queueThCmd: "システムコマンド",
+    queueThStatus: "ステータス",
+    queueThWorkspace: "ワークスペースディレクトリ",
+    queueThActions: "アクション",
+    queueStatusPending: "待機中 (Pending)",
+    queueStatusRunning: "処理中",
+    queueStatusCompleted: "成功",
+    queueStatusFailed: "実行エラー",
+    queueActionViewLogs: "ログを表示",
+
+    // Logs Modal
+    logsModalTitle: "タスクログ:",
+    logsModalWorkspace: "ワークスペース:",
+    logsModalStatus: "ステータス:",
+    logsModalExitCode: "終了コード (Exit Code):",
+    logsModalCreatedAt: "作成日時:",
+    logsModalStartedAt: "実行日時:",
+    logsModalStdout: "標準出力バッファ (STDOUT)",
+    logsModalStderr: "エラーメッセージ (STDERR)",
+    logsModalSysError: "システムエラー",
+    logsModalWaiting: "システムによるリアルタイムログの記録を待機中...",
+    logsModalCloseBtn: "閉じる"
   }
 };
 

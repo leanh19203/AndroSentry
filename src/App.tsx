@@ -1927,35 +1927,35 @@ export default function App() {
               <h3 className="font-semibold text-white border-b border-[#21262d] pb-3 mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Layers className="w-5 h-5 text-red-500 animate-pulse" />
-                  <span>Hàng đợi Tác vụ & Cô lập Workspace (Task Queue & Workspace Isolation)</span>
+                  <span>{t.queueTitle}</span>
                 </div>
                 <button
                   onClick={fetchTasks}
                   className="p-1 rounded hover:bg-[#21262d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
-                  title="Làm mới hàng đợi"
+                  title={t.queueRefreshTooltip}
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
               </h3>
 
               <div className="text-xs text-[#8b949e] mb-4 leading-relaxed">
-                Các tiến trình nặng (như <code className="text-red-400 font-mono">apktool</code>, <code className="text-red-400 font-mono">jadx</code>) được tự động điều phối qua hàng đợi bất đồng bộ nhằm tối ưu hiệu năng tài nguyên. Mỗi phiên chạy được cấp một không gian làm việc cô lập (<code className="text-cyan-400 font-mono">Workspace Isolation</code>) dạng <code className="text-cyan-400 font-mono">workspaces/task-id</code> nhằm ngăn chặn xung đột ghi đè tệp tin và đảm bảo tính đồng thời.
+                {t.queueDescText1}<code className="text-red-400 font-mono">apktool</code>{t.queueDescText2}<code className="text-red-400 font-mono">jadx</code>{t.queueDescText3}<code className="text-cyan-400 font-mono">Workspace Isolation</code>{t.queueDescText4}<code className="text-cyan-400 font-mono">workspaces/task-id</code>{t.queueDescText5}
               </div>
 
               {tasksList.length === 0 ? (
                 <div className="text-center py-6 text-[#8b949e] text-xs border border-dashed border-[#21262d] rounded-lg">
-                  Chưa ghi nhận tác vụ nặng nào hoạt động. Hãy kích hoạt quy trình dịch ngược Apktool ở trên để quan sát.
+                  {t.queueEmpty}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-[#21262d] text-[#8b949e] font-mono text-[10px] uppercase">
-                        <th className="py-2 px-3">ID Tác vụ</th>
-                        <th className="py-2 px-3">Lệnh hệ thống</th>
-                        <th className="py-2 px-3">Trạng thái</th>
-                        <th className="py-2 px-3">Thư mục Workspace</th>
-                        <th className="py-2 px-3 text-right">Hành động</th>
+                        <th className="py-2 px-3">{t.queueThId}</th>
+                        <th className="py-2 px-3">{t.queueThCmd}</th>
+                        <th className="py-2 px-3">{t.queueThStatus}</th>
+                        <th className="py-2 px-3">{t.queueThWorkspace}</th>
+                        <th className="py-2 px-3 text-right">{t.queueThActions}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1970,23 +1970,23 @@ export default function App() {
                           <td className="py-2.5 px-3">
                             {task.status === "pending" && (
                               <span className="px-2 py-0.5 rounded-full text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-medium">
-                                Đang chờ (Pending)
+                                {t.queueStatusPending}
                               </span>
                             )}
                             {task.status === "running" && (
                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium animate-pulse">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                Đang xử lý
+                                {t.queueStatusRunning}
                               </span>
                             )}
                             {task.status === "completed" && (
                               <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-                                Thành công
+                                {t.queueStatusCompleted}
                               </span>
                             )}
                             {task.status === "failed" && (
                               <span className="px-2 py-0.5 rounded-full text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 font-medium">
-                                Lỗi thực thi
+                                {t.queueStatusFailed}
                               </span>
                             )}
                           </td>
@@ -1998,7 +1998,7 @@ export default function App() {
                               onClick={() => setSelectedQueueTask(task)}
                               className="px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] hover:text-white transition-colors text-[11px] cursor-pointer"
                             >
-                              Xem Nhật ký (Logs)
+                              {t.queueActionViewLogs}
                             </button>
                           </td>
                         </tr>
@@ -2019,8 +2019,8 @@ export default function App() {
               {/* Header */}
               <div className="p-4 border-b border-[#21262d] flex justify-between items-center" id="task-logs-header">
                 <div>
-                  <h3 className="font-bold text-white text-sm">Nhật ký Tác vụ: task-{selectedQueueTask.id.slice(0, 12)}</h3>
-                  <p className="text-xs text-[#8b949e] font-mono mt-0.5">Workspace: {selectedQueueTask.workspaceDir}</p>
+                  <h3 className="font-bold text-white text-sm">{t.logsModalTitle} task-{selectedQueueTask.id.slice(0, 12)}</h3>
+                  <p className="text-xs text-[#8b949e] font-mono mt-0.5">{t.logsModalWorkspace} {selectedQueueTask.workspaceDir}</p>
                 </div>
                 <button
                   onClick={() => setSelectedQueueTask(null)}
@@ -2033,19 +2033,24 @@ export default function App() {
               {/* Info Bar */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-[#0d1117] border-b border-[#21262d] text-[11px]">
                 <div>
-                  <span className="text-[#8b949e] block">Trạng thái:</span>
-                  <strong className="text-white capitalize">{selectedQueueTask.status}</strong>
+                  <span className="text-[#8b949e] block">{t.logsModalStatus}</span>
+                  <strong className="text-white capitalize">
+                    {selectedQueueTask.status === "pending" && t.queueStatusPending}
+                    {selectedQueueTask.status === "running" && t.queueStatusRunning}
+                    {selectedQueueTask.status === "completed" && t.queueStatusCompleted}
+                    {selectedQueueTask.status === "failed" && t.queueStatusFailed}
+                  </strong>
                 </div>
                 <div>
-                  <span className="text-[#8b949e] block">Mã thoát (Exit Code):</span>
+                  <span className="text-[#8b949e] block">{t.logsModalExitCode}</span>
                   <strong className="text-white">{selectedQueueTask.code !== null ? selectedQueueTask.code : "N/A"}</strong>
                 </div>
                 <div>
-                  <span className="text-[#8b949e] block">Khởi tạo:</span>
+                  <span className="text-[#8b949e] block">{t.logsModalCreatedAt}</span>
                   <strong className="text-white">{new Date(selectedQueueTask.createdAt).toLocaleTimeString()}</strong>
                 </div>
                 <div>
-                  <span className="text-[#8b949e] block">Thực thi:</span>
+                  <span className="text-[#8b949e] block">{t.logsModalStartedAt}</span>
                   <strong className="text-white">
                     {selectedQueueTask.startedAt ? new Date(selectedQueueTask.startedAt).toLocaleTimeString() : "N/A"}
                   </strong>
@@ -2061,27 +2066,27 @@ export default function App() {
                 
                 {selectedQueueTask.stdout && (
                   <div className="whitespace-pre-wrap">
-                    <span className="text-[#8b949e] block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">Bộ nhớ đệm đầu ra (STDOUT)</span>
+                    <span className="text-[#8b949e] block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">{t.logsModalStdout}</span>
                     {selectedQueueTask.stdout}
                   </div>
                 )}
 
                 {selectedQueueTask.stderr && (
                   <div className="whitespace-pre-wrap text-red-400">
-                    <span className="text-[#8b949e] block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">Thông báo lỗi (STDERR)</span>
+                    <span className="text-[#8b949e] block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">{t.logsModalStderr}</span>
                     {selectedQueueTask.stderr}
                   </div>
                 )}
 
                 {selectedQueueTask.error && (
                   <div className="whitespace-pre-wrap text-red-500 font-bold">
-                    <span className="text-red-500 block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">Lỗi hệ thống</span>
+                    <span className="text-red-500 block border-b border-[#21262d] pb-1 mb-1 font-sans text-[10px] uppercase tracking-wider">{t.logsModalSysError}</span>
                     {selectedQueueTask.error}
                   </div>
                 )}
 
                 {!selectedQueueTask.stdout && !selectedQueueTask.stderr && !selectedQueueTask.error && (
-                  <div className="text-gray-500 italic">Đang chờ hệ thống ghi nhật ký thời gian thực...</div>
+                  <div className="text-gray-500 italic">{t.logsModalWaiting}</div>
                 )}
               </div>
 
@@ -2091,7 +2096,7 @@ export default function App() {
                   onClick={() => setSelectedQueueTask(null)}
                   className="px-4 py-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-white transition-colors text-xs cursor-pointer"
                 >
-                  Đóng
+                  {t.logsModalCloseBtn}
                 </button>
               </div>
             </div>

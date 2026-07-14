@@ -114,7 +114,7 @@ const createBulletParagraph = (children) => {
 const doc = new Document({
   creator: "Lê Đức Anh",
   title: "Tài liệu giới thiệu, mô tả và hướng dẫn sử dụng",
-  description: "Tài liệu chi tiết về công cụ hỗ trợ kiểm thử xâm nhập thiết bị Android chạy trên Windows và Kali Linux.",
+  description: "Tài liệu chi tiết về công cụ hỗ trợ kiểm thử xâm nhập thiết bị Android.",
   sections: [
     {
       properties: {},
@@ -129,7 +129,7 @@ const doc = new Document({
           createText("Phiên bản phần mềm: ", { bold: true }),
           createText("v1.2.1\n"),
           createText("Hệ điều hành hỗ trợ: ", { bold: true }),
-          createText("Windows 10/11, Kali Linux, Ubuntu\n"),
+          createText("Linux (Kali Linux, Ubuntu), macOS (hoặc Windows thông qua WSL/Docker)\n"),
           createText("Github: ", { bold: true }),
           createText("https://github.com/leanh19203/AndroSentry"),
         ], { before: 240, after: 480 }),
@@ -197,25 +197,21 @@ const doc = new Document({
           createText("Gỡ bỏ ứng dụng bất kỳ hoặc cài đặt tệp APK mới trực tiếp thông qua thao tác kéo thả hoặc chọn tệp."),
         ]),
 
-        createHeading2("3. Kiểm thử và Khai thác (Exploitation & Backdoor Generator)"),
+        createHeading2("3. Kiểm thử và Đóng gói ứng dụng (Application Decompilation & Signer)"),
         createBodyParagraph([
-          createText("Tích hợp các công cụ pentest hàng đầu để thực hiện các bài kiểm tra chuyên sâu:"),
-        ]),
-        createBulletParagraph([
-          createText("Sinh mã độc APK (MSFVenom): ", { bold: true }),
-          createText("Giao diện trực quan để sinh tệp tin APK chứa backdoor (Payload: android/meterpreter/reverse_tcp) phục vụ kiểm thử xâm nhập hợp pháp. Người dùng chỉ cần nhập IP (LHOST) và Port (LPORT)."),
+          createText("Tích hợp các công cụ dịch ngược và đóng gói hàng đầu:"),
         ]),
         createBulletParagraph([
           createText("Dịch ngược và Đóng gói (Apktool): ", { bold: true }),
-          createText("Tự động giải nén tài nguyên ứng dụng thành mã nguồn Smali, chỉnh sửa và đóng gói lại một cách tự động."),
+          createText("Tự động giải nén tài nguyên ứng dụng thành mã nguồn Smali, chỉnh sửa cấu trúc tệp tin và đóng gói lại một cách tự động thông qua hàng đợi tác vụ bất đồng bộ."),
         ]),
         createBulletParagraph([
           createText("Ký ứng dụng (Signing Tools): ", { bold: true }),
-          createText("Tích hợp quy trình căn chỉnh tối ưu hóa dung lượng (Zipalign) và ký số bảo mật bằng apksigner giúp APK đã sửa đổi có thể cài đặt trực tiếp lên thiết bị Android đích."),
+          createText("Tích hợp quy trình căn chỉnh tối ưu hóa dung lượng (Zipalign) và ký số bảo mật bằng apksigner với keystore tự sinh, giúp APK đã sửa đổi có thể cài đặt trực tiếp lên thiết bị Android mục tiêu."),
         ]),
         createBulletParagraph([
           createText("Phân tích mã nguồn (JADX-GUI): ", { bold: true }),
-          createText("Hỗ trợ mở nhanh trình dịch ngược mã nguồn Java của APK chỉ với một click chuột."),
+          createText("Hỗ trợ mở nhanh trình dịch ngược mã nguồn Java của APK chỉ với một click chuột từ giao diện để kiểm thử tĩnh (Static Analysis)."),
         ]),
 
         createHeading2("4. Phân tích Động & Frida Instrumentation"),
