@@ -887,6 +887,14 @@ export const FRIDA_SCRIPTS_TRANSLATIONS: Record<string, Record<string, { title: 
     "frida-3": {
       title: "Ghi đè hàm mã hóa AES (Crypto Inspection)",
       description: "Script theo dõi trực tiếp tham số đầu vào và đầu ra của thư viện mật mã học Java (Cipher) để thu thập khóa bí mật AES trong thời gian thực."
+    },
+    "frida-4": {
+      title: "Bypass Xác thực Vân tay / Biometric",
+      description: "Script Frida để vượt qua kiểm tra sinh trắc học (vân tay, khuôn mặt) bằng cách ghi đè kết quả xác thực trong các thư viện hỗ trợ Biometric Android."
+    },
+    "frida-5": {
+      title: "Ghi đè Hàm kiểm tra Tùy chỉnh (Custom Hook)",
+      description: "Mẫu script can thiệp vào các lớp Java tùy chỉnh của ứng dụng để ép buộc trạng thái đăng nhập, kích hoạt tính năng Premium hoặc bypass mã PIN bảo vệ."
     }
   },
   en: {
@@ -901,6 +909,14 @@ export const FRIDA_SCRIPTS_TRANSLATIONS: Record<string, Record<string, { title: 
     "frida-3": {
       title: "AES Crypto Key & Payload Inspector",
       description: "Injects hooks directly into the Java Cipher class, outputting raw byte payloads and secret AES keys onto your Kali console in real time."
+    },
+    "frida-4": {
+      title: "Bypass Fingerprint / Biometric Authentication",
+      description: "Frida script to bypass biometric prompt verification check by overriding the authentication results of popular Android biometric libraries."
+    },
+    "frida-5": {
+      title: "Custom Method Interception (Custom Hook)",
+      description: "A template script to intercept and manipulate custom Java classes of the app to bypass pin codes, activate premium features, or forge log status."
     }
   },
   ja: {
@@ -915,6 +931,14 @@ export const FRIDA_SCRIPTS_TRANSLATIONS: Record<string, Record<string, { title: 
     "frida-3": {
       title: "AES暗号鍵とペイロードのリアルタイム監視",
       description: "JavaのCipherクラスのdoFinal関数をフックし、暗号・復号処理の対象バイト数や秘密AESキーをKaliコンソールに平文出力させます。"
+    },
+    "frida-4": {
+      title: "指紋・生体認証バイパス (Biometric Bypass)",
+      description: "Androidの生体認証（指紋、顔認証）チェックをバイパスし、認証成功結果を強制的に返却するようにフックします。"
+    },
+    "frida-5": {
+      title: "カスタム関数・メソッドの書き換え (Custom Hook)",
+      description: "アプリ固有 của カスタムJavaクラスをインターセプトしてPremium機能の解放、ログイン強制、PINコード検証突破などを実現するテンプレートです。"
     }
   }
 };

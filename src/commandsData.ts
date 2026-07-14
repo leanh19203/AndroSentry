@@ -230,5 +230,54 @@ export const FRIDA_SCRIPTS = [
         return result;
     };
 });`
+  },
+  {
+    title: "Bypass Xác thực Vân tay / Biometric",
+    description: "Script Frida để vượt qua kiểm tra sinh trắc học (vân tay, khuôn mặt) bằng cách ghi đè kết quả xác thực trong các thư viện hỗ trợ Biometric Android.",
+    code: `Java.perform(function () {
+    // Hook androidx.biometric.BiometricManager
+    try {
+        var BiometricManager = Java.use("androidx.biometric.BiometricManager");
+        BiometricManager.canAuthenticate.overload("int").implementation = function (authenticators) {
+            console.log("[+] Bypassed androidx.biometric canAuthenticate()");
+            return 0; // BIOMETRIC_SUCCESS
+        };
+    } catch (e) {
+        console.log("[-] androidx.biometric.BiometricManager not found");
+    }
+
+    // Hook android.hardware.fingerprint.FingerprintManager
+    try {
+        var FingerprintManager = Java.use("android.hardware.fingerprint.FingerprintManager");
+        FingerprintManager.hasEnrolledFingerprints.implementation = function () {
+            console.log("[+] Bypassed hasEnrolledFingerprints() checks");
+            return true;
+        };
+    } catch (e) {
+        console.log("[-] android.hardware.fingerprint.FingerprintManager not found");
+    }
+});`
+  },
+  {
+    title: "Ghi đè Hàm kiểm tra Tùy chỉnh (Custom Hook)",
+    description: "Mẫu script can thiệp vào các lớp Java tùy chỉnh của ứng dụng để ép buộc trạng thái đăng nhập, kích hoạt tính năng Premium hoặc bypass mã PIN bảo vệ.",
+    code: `Java.perform(function () {
+    // Lưu ý: Thay đổi 'com.example.app' và tên các lớp/hàm tương ứng với thực tế phân tích từ JADX
+    try {
+        var AuthManager = Java.use("com.example.app.security.AuthManager");
+        
+        AuthManager.isUserPremium.implementation = function () {
+            console.log("[+] Hooked isUserPremium() and forced to return TRUE");
+            return true;
+        };
+
+        AuthManager.verifyLocalPin.implementation = function (userPin) {
+            console.log("[+] Hooked verifyLocalPin() with input: " + userPin + " -> forced TRUE");
+            return true;
+        };
+    } catch (e) {
+        console.log("[-] Class com.example.app.security.AuthManager not found, please check class path");
+    }
+});`
   }
 ];
