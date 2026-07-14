@@ -194,8 +194,13 @@ export default function App() {
     try {
       const response = await fetch("/api/tasks");
       if (response.ok) {
-        const data = await response.json();
-        setTasksList(data);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          setTasksList(data);
+        } else {
+          console.warn("Task queue endpoint returned non-JSON response (likely HTML fallback during startup).");
+        }
       }
     } catch (err) {
       console.error("Error fetching task queue:", err);
@@ -376,7 +381,9 @@ export default function App() {
         body: JSON.stringify({ command: cmdString })
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
+      const isJson = contentType && contentType.includes("application/json");
+      const data = isJson ? await response.json() : { error: "Không nhận được phản hồi JSON hợp lệ từ máy chủ." };
 
       setTerminalHistory(prev => {
         const copy = [...prev];
@@ -431,7 +438,14 @@ export default function App() {
 
   useEffect(() => {
     fetch("/api/health")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Yêu cầu kiểm tra sức khỏe thất bại.");
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          return res.json();
+        }
+        throw new Error("Phản hồi không ở định dạng JSON.");
+      })
       .then((data) => {
         setHealthStatus({ aiConfigured: data.aiConfigured, checked: true });
       })
@@ -520,6 +534,10 @@ export default function App() {
       const response = await fetch("/api/read-guide");
       if (!response.ok) {
         throw new Error("Không thể đọc tệp tài liệu hướng dẫn.");
+      }
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Phản hồi từ máy chủ không hợp lệ.");
       }
       const data = await response.json();
       setGuideContent(data.content || "");
@@ -703,11 +721,16 @@ export default function App() {
         body: JSON.stringify({ manifestContent: manifestText, language }),
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        setAuditResult(data);
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        if (response.ok) {
+          setAuditResult(data);
+        } else {
+          setAuditError(data.error || "Có lỗi bất ngờ xảy ra trong quá trình phân tích.");
+        }
       } else {
-        setAuditError(data.error || "Có lỗi bất ngờ xảy ra trong quá trình phân tích.");
+        setAuditError("Không nhận được phản hồi JSON hợp lệ từ máy chủ.");
       }
     } catch (err: any) {
       setAuditError("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại cấu hình ứng dụng.");
@@ -721,11 +744,16 @@ export default function App() {
     setAuditError(null);
     try {
       const response = await fetch(`/api/get-decompiled-manifest?outputDir=${encodeURIComponent(apktoolOutputDir)}`);
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setManifestText(data.content);
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setManifestText(data.content);
+        } else {
+          setAuditError(data.error || "Không thể tải tệp AndroidManifest.xml.");
+        }
       } else {
-        setAuditError(data.error || "Không thể tải tệp AndroidManifest.xml.");
+        setAuditError("Không nhận được phản hồi JSON hợp lệ từ máy chủ.");
       }
     } catch (err: any) {
       setAuditError("Không thể kết nối đến máy chủ để đọc tệp Manifest.");
@@ -1010,24 +1038,37 @@ export default function App() {
         body: JSON.stringify({ messages: history, language }),
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: Math.random().toString(),
-            role: "assistant",
-            content: data.content,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        if (response.ok) {
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              id: Math.random().toString(),
+              role: "assistant",
+              content: data.content,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+          ]);
+        } else {
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              id: Math.random().toString(),
+              role: "assistant",
+              content: `⚠️ Lỗi: ${data.error || "Không thể tải phản hồi từ trợ lý ảo."}`,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+          ]);
+        }
       } else {
         setChatMessages((prev) => [
           ...prev,
           {
             id: Math.random().toString(),
             role: "assistant",
-            content: `⚠️ Lỗi: ${data.error || "Không thể tải phản hồi từ trợ lý ảo."}`,
+            content: "⚠️ Lỗi: Máy chủ trả về định dạng phản hồi không hợp lệ.",
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);

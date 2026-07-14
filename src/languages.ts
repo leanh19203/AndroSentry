@@ -207,7 +207,7 @@ export const TRANSLATIONS: Record<string, any> = {
     termSimNotice: "[MÔ PHỎNG] Đang giả lập lệnh pentest trên trình duyệt...",
     
     // Footer
-    footerCopyright: "© 2026 AndroSentry Graphical Assistant — Được thiết kế bởi Hacker Mũ Trắng.",
+    footerCopyright: "© 2026 AndroSentry Project. All Rights Reserved.",
     footerDisclaimer: "Cảnh báo: Chỉ sử dụng phần mềm cho các mục tiêu đã được cấp phép kiểm thử xâm nhập hợp pháp.",
     
     // Guide Modal
@@ -414,7 +414,7 @@ export const TRANSLATIONS: Record<string, any> = {
     termSimNotice: "[SIMULATE] Simulating pentest command in sandbox...",
     
     // Footer
-    footerCopyright: "© 2026 AndroSentry Graphical Assistant — Designed by White Hat Hackers.",
+    footerCopyright: "© 2026 AndroSentry Project. All Rights Reserved.",
     footerDisclaimer: "Disclaimer: Use this software only on legally authorized targets. Unpermitted hacking is strictly illegal.",
     
     // Guide Modal
@@ -621,7 +621,7 @@ export const TRANSLATIONS: Record<string, any> = {
     termSimNotice: "[シミュレーション] サンドボックス内でペンテストコマンドをシミュレート中...",
     
     // Footer
-    footerCopyright: "© 2026 AndroSentry Graphical Assistant — ホワイトハットハッカーによる設計。",
+    footerCopyright: "© 2026 AndroSentry Project. All Rights Reserved.",
     footerDisclaimer: "免責事項：認可された対象に対してのみ脆弱性テストを行ってください。無許可のハッキングは法律で厳しく禁止されています。",
     
     // Guide Modal
