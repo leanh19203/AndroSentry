@@ -127,7 +127,7 @@ const doc = new Document({
           createText("Được phát triển bởi: ", { bold: true }),
           createText("Lê Đức Anh\n"),
           createText("Phiên bản phần mềm: ", { bold: true }),
-          createText("v1.3.0\n"),
+          createText("v1.3.1\n"),
           createText("Hệ điều hành hỗ trợ: ", { bold: true }),
           createText("Linux (Kali Linux, Ubuntu), macOS (hoặc Windows thông qua WSL/Docker)\n"),
           createText("Github: ", { bold: true }),

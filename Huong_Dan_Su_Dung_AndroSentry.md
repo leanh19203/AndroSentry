@@ -2,7 +2,7 @@
 ## Tài liệu Giới thiệu, Mô tả và Hướng dẫn sử dụng chi tiết
 
 - **Được phát triển bởi:** Lê Đức Anh
-- **Phiên bản phần mềm:** v1.3.0
+- **Phiên bản phần mềm:** v1.3.1
 - **Hệ điều hành hỗ trợ:** Linux (Kali Linux, Ubuntu), macOS (hoặc Windows thông qua WSL/Docker)
 - **Github:** https://github.com/leanh19203/AndroSentry
 
@@ -40,10 +40,12 @@ Tích hợp các công cụ dịch ngược và đóng gói hàng đầu:
 *   **Ký ứng dụng (Signing Tools):** Tích hợp quy trình căn chỉnh tối ưu hóa dung lượng (`Zipalign`) và ký số bảo mật bằng `apksigner` với keystore tự sinh, giúp APK đã sửa đổi có thể cài đặt trực tiếp lên thiết bị Android mục tiêu.
 *   **Phân tích mã nguồn (JADX-GUI):** Hỗ trợ mở nhanh trình dịch ngược mã nguồn Java của APK chỉ với một click chuột từ giao diện để kiểm thử tĩnh (Static Analysis).
 
-### 4. Phân tích Động & Frida Instrumentation
-Cho phép can thiệp vào luồng thực thi của ứng dụng khi đang chạy (Runtime Instrumentation):
-*   **Bypass SSL Pinning:** Tự động đẩy Frida Server lên thiết bị Android, khởi chạy server và tiêm (`inject`) script bypass cơ chế ghim chứng chỉ bảo mật (SSL Pinning), giúp phân tích các gói tin HTTPS qua Burp Suite.
-*   **Giám sát Logcat thời gian thực:** Bộ lọc thông minh giúp theo dõi luồng thông báo hệ thống và log lỗi của thiết bị Android trực tiếp trên giao diện console.
+### 4. Phân tích Động & Frida Studio (Interactive & AI)
+Cho phép can thiệp và bẻ gãy các rào cản bảo mật ở mức runtime (Runtime Instrumentation) một cách linh hoạt:
+*   **Thư viện mẫu Bypass (Presets):** Cung cấp sẵn các đoạn mã bypass phổ biến như SSL Pinning, Root Detection, Mock Location, v.v., tương thích hoàn toàn với các framework bảo mật phổ biến.
+*   **Bộ dựng mã tương tác (Interactive Builder):** Sinh mã Hooking tự động theo tham số nhập từ biểu mẫu (Tên lớp, Phương thức, tham số overload, hành động can thiệp như in log, ép trả về TRUE/FALSE, trả về số nguyên tùy chỉnh hoặc bỏ qua hàm void).
+*   **AI Sinh Frida Script (Gemini):** Nhận yêu cầu dạng ngôn ngữ tự nhiên và chuyển đổi trực tiếp thành mã Frida chất lượng cao kèm giải thích cơ chế và cách thực thi cụ thể từ Gemini AI.
+*   **Quản lý Frida Server & Logcat:** Tự động đẩy Frida Server tương thích lên thiết bị Android, khởi chạy server dưới nền và theo dõi dòng thông báo hệ thống thời gian thực trực tiếp trên bảng điều khiển.
 
 ### 5. Kiểm thử Tĩnh và Đánh giá Cấu hình (AI AndroidManifest Auditor)
 Phát hiện sớm các lỗ hổng bảo mật cấu hình trước khi ứng dụng được biên dịch hoặc phân phối:
@@ -73,7 +75,11 @@ Hệ thống AI chuyên biệt hỗ trợ Pentester phân tích, tư vấn và g
 1.  **Dịch ngược mã nguồn ứng dụng (Decompilation):** Truy cập tab **Quy trình Apktool (Apktool)**, chọn tệp APK hoặc kéo thả trực tiếp tệp cài đặt để thực hiện giải nén mã nguồn Smali và tài nguyên. Quá trình decompile sẽ được xếp vào **Hàng đợi Tác vụ (Task Queue)** để thực thi bất đồng bộ tránh nghẽn luồng.
 2.  **Đánh giá cấu hình tự động (Manifest AI Audit):** Sau khi quá trình dịch ngược hoàn tất, chuyển sang tab **Kiểm thử tệp AndroidManifest (Manifest)**. Hệ thống sẽ tự động tìm kiếm tệp `AndroidManifest.xml` trong thư mục workspace tương ứng. Hãy nhấp nút **Gửi phân tích AI (Send to AI Audit)** để mô hình trí tuệ nhân tạo Gemini tự động quét và phân tích các sơ hở trong tệp tin cấu hình.
 3.  **Duyệt mã nguồn chi tiết (JADX Static Analysis):** Vào tab **Quản lý thiết bị (ADB)**, tìm kiếm ứng dụng trên thiết bị mục tiêu, nhấp chọn nút trích xuất (`Backup APK`) để lấy file cài đặt về máy chủ. Tiếp theo, nhấp nút **Mở bằng JADX-GUI (Open in JADX)** để mở nhanh giao diện dịch ngược Java của file APK đó, giúp kiểm thử tĩnh tìm kiếm lỗ hổng logic hoặc thông tin nhạy cảm.
-4.  **Phân tích động và can thiệp Runtime (Frida Instrumentation):** Di chuyển đến tab **Phân tích Frida (Frida)**, nhấp nút **Khởi chạy Frida Server (Start Frida Server)**. Chọn ứng dụng mục tiêu cần phân tích và bấm **Bypass SSL Pinning** để tiêm tập lệnh cấu hình bypass ghim chứng chỉ. Sau đó cấu hình Burp Suite làm proxy để chụp bắt dữ liệu HTTPS. Đồng thời, theo dõi log hệ thống thời gian thực tại khung giám sát Logcat ở bên dưới.
+4.  **Phân tích động và can thiệp Runtime (Frida Studio):** Di chuyển đến tab **Phân tích Frida (Frida)**. Tại đây, bạn có 3 công cụ mạnh mẽ:
+    *   **Thư viện mẫu Bypass (Presets):** Cho phép bạn chọn nhanh các kịch bản bypass phổ dụng (SSL Pinning, Root Detection, Debugging...) và sao chép mã nguồn để tiêm vào ứng dụng.
+    *   **Bộ dựng mã tương tác (Builder):** Bạn chỉ cần nhập Tên lớp (Class Name), Tên phương thức (Method Name), kiểu tham số và lựa chọn hành động Hook (In logs tham số, ghi đè giá trị trả về thành True/False, trả về số nguyên tùy ý). Mã Javascript tương thích Frida API sẽ tự động dựng lập tức.
+    *   **AI Sinh Frida Script (AI Generator):** Nhập mô tả nghiệp vụ muốn Hook bằng tiếng Việt hoặc tiếng Anh (Ví dụ: "Bypass SSL Pinning cho thư viện OkHttp3", "In ra khóa AES khi Cipher khởi tạo..."), nhấp nút gửi cho Gemini AI. Hệ thống sẽ trả về mã Script hoàn chỉnh kèm mô tả nguyên lý vận hành và hướng dẫn khởi chạy.
+    Để thực thi: Khởi động **Frida Server** qua giao diện, sau đó sử dụng mã Script có được để tiêm vào ứng dụng bằng câu lệnh được cung cấp ở chân bảng điều khiển. Theo dõi trực tiếp log đầu ra tại khung giám sát Logcat thời gian thực bên dưới.
 5.  **Tương tác với Trợ lý bảo mật chuyên sâu (AI Chat Assistant):** Trong suốt quá trình kiểm thử, nếu gặp phải bất kỳ đoạn mã Smali/Java khó hiểu hoặc cần tạo tập lệnh Frida/ADB tùy biến, hãy chuyển sang tab **Trợ lý AI (AI Chat)** để gửi yêu cầu hỗ trợ. AI sẽ đồng hành giải thích và sinh mã tối ưu theo thời gian thực.
 
 ---

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { handleAuditManifest, handleChat } from "../controllers/ai.controller";
+import { handleAuditManifest, handleChat, handleGenerateFridaScript } from "../controllers/ai.controller";
 import { handleExecuteCommand } from "../controllers/command.controller";
 import { handleRunStaticScan } from "../controllers/scanner.controller";
 import {
@@ -37,6 +37,9 @@ router.post("/audit-manifest", validate(auditManifestSchema), handleAuditManifes
 
 // 3. AI Pentest Assistant Chatbot
 router.post("/chat", validate(chatSchema), handleChat);
+
+// 3.5. AI Frida Script Generator
+router.post("/generate-frida", handleGenerateFridaScript);
 
 // 4. Safe Command Execution Endpoint
 router.post("/execute-command", validate(executeCommandSchema), handleExecuteCommand);

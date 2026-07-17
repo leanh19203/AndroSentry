@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { auditManifest, chatAssistant } from "../services/ai.service";
+import { auditManifest, chatAssistant, generateFridaScript } from "../services/ai.service";
 
 export async function handleAuditManifest(req: Request, res: Response): Promise<void> {
   const { manifestContent, language = "vi" } = req.body;
@@ -41,3 +41,23 @@ export async function handleChat(req: Request, res: Response): Promise<void> {
     });
   }
 }
+
+export async function handleGenerateFridaScript(req: Request, res: Response): Promise<void> {
+  const { prompt, language = "vi" } = req.body;
+
+  if (!prompt || typeof prompt !== "string") {
+    res.status(400).json({ error: "Yêu cầu chuỗi prompt mô tả kịch bản Frida hợp lệ." });
+    return;
+  }
+
+  try {
+    const result = await generateFridaScript(prompt, language);
+    res.json(result);
+  } catch (error: any) {
+    console.error("Lỗi trong Controller tạo mã Frida:", error);
+    res.status(500).json({
+      error: error.message || "Không thể tạo mã Frida bằng AI vào lúc này.",
+    });
+  }
+}
+

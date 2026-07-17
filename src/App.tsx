@@ -29,7 +29,9 @@ import {
   FolderOpen,
   X,
   Menu,
-  ChevronDown
+  ChevronDown,
+  Wrench,
+  Sliders
 } from "lucide-react";
 import { ADB_COMMANDS, APKTOOL_STEPS, FRIDA_SCRIPTS } from "./commandsData";
 import { AdbCommand, ManifestFinding, AuditResult, ChatMessage } from "./types";
@@ -242,6 +244,196 @@ export default function App() {
 
   const [userChatInput, setUserChatInput] = useState("");
   const [isSendingChat, setIsSendingChat] = useState(false);
+
+  // ========================================================
+  // Frida Studio (Interactive & AI) States & Handlers
+  // ========================================================
+  const [fridaSubTab, setFridaSubTab] = useState<"presets" | "builder" | "ai">("presets");
+  const [builderPkg, setBuilderPkg] = useState(() => packageName || "com.example.app");
+  const [builderClass, setBuilderClass] = useState("com.example.app.MainActivity");
+  const [builderMethod, setBuilderMethod] = useState("checkPremium");
+  const [builderParams, setBuilderParams] = useState("java.lang.String, int");
+  const [builderAction, setBuilderAction] = useState<"log" | "true" | "false" | "custom" | "void">("log");
+  const [builderCustomInt, setBuilderCustomInt] = useState(1);
+  const [builderDelay, setBuilderDelay] = useState(0);
+  const [builderScript, setBuilderScript] = useState("");
+
+  const [fridaAIPrompt, setFridaAIPrompt] = useState("");
+  const [fridaAILoading, setFridaAILoading] = useState(false);
+  const [fridaAIResult, setFridaAIResult] = useState<{ script: string; explanation: string } | null>(null);
+  const [fridaAIError, setFridaAIError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBuilderPkg(packageName);
+  }, [packageName]);
+
+  const generateLocalFridaScript = () => {
+    const cleanPkg = builderPkg.trim() || "com.target.app";
+    const cleanCls = builderClass.trim() || "com.target.app.MainActivity";
+    const cleanMethod = builderMethod.trim() || "targetMethod";
+    const paramList = builderParams.split(",").map(p => p.trim()).filter(p => p !== "");
+    const delayCode = builderDelay > 0 ? `\n    // Delayed start by ${builderDelay}ms\n    setTimeout(function() {\n        runHook();\n    }, ${builderDelay});` : "    runHook();";
+
+    let hookCode = "";
+    if (paramList.length > 0) {
+      const paramArgs = paramList.map((_, i) => `arg${i}`).join(", ");
+      const paramOverload = paramList.map(p => `'${p}'`).join(", ");
+      const hookFunc = `function(${paramArgs}) {`;
+
+      if (builderAction === "log") {
+        hookCode = `
+            targetClass["${cleanMethod}"].overload(${paramOverload}).implementation = ${hookFunc}
+                console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} with args:");
+                ${paramList.map((p, i) => `console.log("  - Arg ${i} (${p}): " + arg${i});`).join("\n                ")}
+                var result = this["${cleanMethod}"](${paramArgs});
+                console.log("  - Return Value: " + result);
+                return result;
+            };`;
+      } else if (builderAction === "true") {
+        hookCode = `
+            targetClass["${cleanMethod}"].overload(${paramOverload}).implementation = ${hookFunc}
+                console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} - Overriding return value to true");
+                return true;
+            };`;
+      } else if (builderAction === "false") {
+        hookCode = `
+            targetClass["${cleanMethod}"].overload(${paramOverload}).implementation = ${hookFunc}
+                console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} - Overriding return value to false");
+                return false;
+            };`;
+      } else if (builderAction === "custom") {
+        hookCode = `
+            targetClass["${cleanMethod}"].overload(${paramOverload}).implementation = ${hookFunc}
+                console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} - Overriding return value to ${builderCustomInt}");
+                return ${builderCustomInt};
+            };`;
+      } else if (builderAction === "void") {
+        hookCode = `
+            targetClass["${cleanMethod}"].overload(${paramOverload}).implementation = ${hookFunc}
+                console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} (void)");
+                this["${cleanMethod}"](${paramArgs});
+            };`;
+      }
+    } else {
+      if (builderAction === "log") {
+        hookCode = `
+            // Hook all overloads of ${cleanMethod}
+            var methodOverloads = targetClass["${cleanMethod}"].overloads;
+            for (var i = 0; i < methodOverloads.length; i++) {
+                (function(index) {
+                    var overload = methodOverloads[index];
+                    overload.implementation = function() {
+                        console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} (Overload " + index + ")");
+                        for (var j = 0; j < arguments.length; j++) {
+                            console.log("  - Arg " + j + ": " + arguments[j]);
+                        }
+                        var result = overload.apply(this, arguments);
+                        console.log("  - Return Value: " + result);
+                        return result;
+                    };
+                })(i);
+            }`;
+      } else if (builderAction === "true") {
+        hookCode = `
+            var methodOverloads = targetClass["${cleanMethod}"].overloads;
+            for (var i = 0; i < methodOverloads.length; i++) {
+                methodOverloads[i].implementation = function() {
+                    console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} (Overload " + i + ") - Overriding return value to true");
+                    return true;
+                };
+            }`;
+      } else if (builderAction === "false") {
+        hookCode = `
+            var methodOverloads = targetClass["${cleanMethod}"].overloads;
+            for (var i = 0; i < methodOverloads.length; i++) {
+                methodOverloads[i].implementation = function() {
+                    console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} (Overload " + i + ") - Overriding return value to false");
+                    return false;
+                };
+            }`;
+      } else if (builderAction === "custom") {
+        hookCode = `
+            var methodOverloads = targetClass["${cleanMethod}"].overloads;
+            for (var i = 0; i < methodOverloads.length; i++) {
+                methodOverloads[i].implementation = function() {
+                    console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} (Overload " + i + ") - Overriding return value to ${builderCustomInt}");
+                    return ${builderCustomInt};
+                };
+            }`;
+      } else if (builderAction === "void") {
+        hookCode = `
+            var methodOverloads = targetClass["${cleanMethod}"].overloads;
+            for (var i = 0; i < methodOverloads.length; i++) {
+                methodOverloads[i].implementation = function() {
+                    console.log("[AndroSentry] Hooked ${cleanCls}.${cleanMethod} (Overload " + i + ") (void)");
+                    overload.apply(this, arguments);
+                };
+            }`;
+      }
+    }
+
+    const compiled = `/*
+ * AndroSentry v1.3.1 Generated Frida Script
+ * Target Package: ${cleanPkg}
+ * Target Class  : ${cleanCls}
+ * Target Method : ${cleanMethod}
+ */
+
+Java.perform(function() {
+    function runHook() {
+        console.log("[AndroSentry] Starting instrumentation hook...");
+        try {
+            var targetClass = Java.use("${cleanCls}");
+            ${hookCode.trim()}
+            console.log("[AndroSentry] Hook applied successfully to ${cleanCls}.${cleanMethod}");
+        } catch (err) {
+            console.error("[AndroSentry] Error applying hook: " + err.message);
+        }
+    }
+
+${delayCode}
+});`;
+    setBuilderScript(compiled);
+  };
+
+  useEffect(() => {
+    generateLocalFridaScript();
+  }, [builderPkg, builderClass, builderMethod, builderParams, builderAction, builderCustomInt, builderDelay]);
+
+  const handleAIGenerateFrida = async () => {
+    if (!fridaAIPrompt.trim()) return;
+    setFridaAILoading(true);
+    setFridaAIError(null);
+    setFridaAIResult(null);
+    try {
+      const response = await fetch("/api/generate-frida", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          prompt: fridaAIPrompt,
+          language: language
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(language === "vi" ? "Lỗi kết nối máy chủ khi tạo mã." : "Server connection error during generation.");
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      setFridaAIResult(data);
+    } catch (err: any) {
+      console.error("AI Frida generation error:", err);
+      setFridaAIError(err.message || "An unexpected error occurred.");
+    } finally {
+      setFridaAILoading(false);
+    }
+  };
+
 
   const getTranslatedAdbCommand = (cmd: any) => {
     const tr = ADB_COMMANDS_TRANSLATIONS[language]?.[cmd.id];
@@ -1118,7 +1310,7 @@ export default function App() {
             </div>
             <div id="logo-text">
               <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                {t.title} <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.3.0</span>
+                {t.title} <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.3.1</span>
               </h1>
               <p className="text-xs text-txt-muted transition-colors duration-300">{t.subtitle}</p>
             </div>
@@ -2243,45 +2435,372 @@ export default function App() {
               <div className="border-b border-[#21262d] pb-4 mb-4" id="frida-header">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <Cpu className="w-5 h-5 text-red-500" />
-                  <span>{t.fridaHeaderTitle}</span>
+                  <span>{t.fridaStudioTitle}</span>
                 </h2>
                 <p className="text-xs text-[#8b949e] mt-1">
-                  {t.fridaHeaderDesc}
+                  {t.fridaStudioDesc}
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="frida-list-grid">
-                {FRIDA_SCRIPTS.map(getTranslatedFridaScript).map((script, idx) => (
-                  <div key={idx} className="bg-[#1c2128] border border-[#30363d] rounded-xl p-5 flex flex-col gap-3 justify-between" id={`frida-item-${idx}`}>
-                    <div id={`frida-content-${idx}`}>
-                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                        {script.title}
-                      </h4>
-                      <p className="text-xs text-[#8b949e] mt-1 mb-4">{script.description}</p>
+              {/* Subtabs Nav */}
+              <div className="flex border-b border-[#21262d] mb-6 gap-2 overflow-x-auto scrollbar-none" id="frida-subtabs-nav">
+                <button
+                  onClick={() => setFridaSubTab("presets")}
+                  className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                    fridaSubTab === "presets"
+                      ? "border-red-500 text-white bg-[#21262d]/30"
+                      : "border-transparent text-[#8b949e] hover:text-white"
+                  }`}
+                  id="frida-subtab-btn-presets"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  <span>{t.fridaTabPresets}</span>
+                </button>
+                <button
+                  onClick={() => setFridaSubTab("builder")}
+                  className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                    fridaSubTab === "builder"
+                      ? "border-red-500 text-white bg-[#21262d]/30"
+                      : "border-transparent text-[#8b949e] hover:text-white"
+                  }`}
+                  id="frida-subtab-btn-builder"
+                >
+                  <Wrench className="w-3.5 h-3.5" />
+                  <span>{t.fridaTabBuilder}</span>
+                </button>
+                <button
+                  onClick={() => setFridaSubTab("ai")}
+                  className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                    fridaSubTab === "ai"
+                      ? "border-red-500 text-white bg-[#21262d]/30"
+                      : "border-transparent text-[#8b949e] hover:text-white"
+                  }`}
+                  id="frida-subtab-btn-ai"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                  <span>{t.fridaTabAI}</span>
+                </button>
+              </div>
 
-                      <div className="relative" id={`code-container-${idx}`}>
-                        <pre className="bg-[#0d1117] border border-[#21262d] rounded-lg p-3 text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[160px] leading-relaxed">
-                          {script.code}
-                        </pre>
-                        <button
-                          onClick={() => handleCopy(script.code, `frida-${idx}`)}
-                          className="absolute top-2 right-2 p-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
-                          title={t.copyTooltip}
-                          id={`frida-copy-${idx}`}
-                        >
-                          {copiedId === `frida-${idx}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
+              {/* TAB CONTENT: PRESETS */}
+              {fridaSubTab === "presets" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in" id="frida-list-grid">
+                  {FRIDA_SCRIPTS.map(getTranslatedFridaScript).map((script, idx) => (
+                    <div key={idx} className="bg-[#1c2128] border border-[#30363d] rounded-xl p-5 flex flex-col gap-3 justify-between" id={`frida-item-${idx}`}>
+                      <div id={`frida-content-${idx}`}>
+                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                          {script.title}
+                        </h4>
+                        <p className="text-xs text-[#8b949e] mt-1 mb-4">{script.description}</p>
+
+                        <div className="relative" id={`code-container-${idx}`}>
+                          <pre className="bg-[#0d1117] border border-[#21262d] rounded-lg p-3 text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[160px] leading-relaxed">
+                            {script.code}
+                          </pre>
+                          <button
+                            onClick={() => handleCopy(script.code, `frida-${idx}`)}
+                            className="absolute top-2 right-2 p-1.5 rounded bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors cursor-pointer"
+                            title={t.copyTooltip}
+                            id={`frida-copy-${idx}`}
+                          >
+                            {copiedId === `frida-${idx}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-[#0d1117] rounded-lg p-2 px-3 border border-[#21262d] text-[10px] font-mono text-[#8b949e] flex items-center justify-between mt-2" id={`frida-run-tip-${idx}`}>
+                        <span>{t.fridaRunTip}</span>
+                        <code className="text-cyan-400">frida -U -f {packageName} -l script.js</code>
                       </div>
                     </div>
+                  ))}
+                </div>
+              )}
 
-                    <div className="bg-[#0d1117] rounded-lg p-2 px-3 border border-[#21262d] text-[10px] font-mono text-[#8b949e] flex items-center justify-between mt-2" id={`frida-run-tip-${idx}`}>
-                      <span>{t.fridaRunTip}</span>
-                      <code className="text-cyan-400">frida -U -f {packageName} -l script.js</code>
+              {/* TAB CONTENT: INTERACTIVE BUILDER */}
+              {fridaSubTab === "builder" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in" id="frida-builder-layout">
+                  {/* Left Controls Form */}
+                  <div className="lg:col-span-5 flex flex-col gap-4" id="frida-builder-inputs">
+                    <div className="bg-[#1c2128] border border-[#30363d] rounded-xl p-4 flex flex-col gap-4">
+                      {/* Package Name */}
+                      <div id="builder-pkg-group">
+                        <label className="block text-xs font-semibold text-[#8b949e] mb-1.5">{t.fridaLabelPackage}</label>
+                        <input
+                          type="text"
+                          value={builderPkg}
+                          onChange={(e) => setBuilderPkg(e.target.value)}
+                          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                          placeholder="com.example.app"
+                          id="builder-input-pkg"
+                        />
+                      </div>
+
+                      {/* Class Name */}
+                      <div id="builder-class-group">
+                        <label className="block text-xs font-semibold text-[#8b949e] mb-1.5">{t.fridaLabelClass}</label>
+                        <input
+                          type="text"
+                          value={builderClass}
+                          onChange={(e) => setBuilderClass(e.target.value)}
+                          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors font-mono"
+                          placeholder="com.example.app.MainActivity"
+                          id="builder-input-class"
+                        />
+                      </div>
+
+                      {/* Method Name */}
+                      <div id="builder-method-group">
+                        <label className="block text-xs font-semibold text-[#8b949e] mb-1.5">{t.fridaLabelMethod}</label>
+                        <input
+                          type="text"
+                          value={builderMethod}
+                          onChange={(e) => setBuilderMethod(e.target.value)}
+                          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors font-mono"
+                          placeholder="checkPremium"
+                          id="builder-input-method"
+                        />
+                      </div>
+
+                      {/* Params types */}
+                      <div id="builder-params-group">
+                        <label className="block text-xs font-semibold text-[#8b949e] mb-1.5">
+                          {t.fridaLabelParams}
+                          <span className="text-[10px] text-[#58a6ff] ml-1 font-normal">(Optional)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={builderParams}
+                          onChange={(e) => setBuilderParams(e.target.value)}
+                          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors font-mono"
+                          placeholder="java.lang.String, int"
+                          id="builder-input-params"
+                        />
+                      </div>
+
+                      {/* Action Selection */}
+                      <div id="builder-action-group">
+                        <label className="block text-xs font-semibold text-[#8b949e] mb-1.5">{t.fridaLabelAction}</label>
+                        <div className="flex flex-col gap-2">
+                          {[
+                            { value: "log", label: t.fridaActionLog },
+                            { value: "true", label: t.fridaActionTrue },
+                            { value: "false", label: t.fridaActionFalse },
+                            { value: "custom", label: t.fridaActionCustom },
+                            { value: "void", label: t.fridaActionVoid },
+                          ].map((act) => (
+                            <label key={act.value} className="flex items-center gap-2 cursor-pointer text-xs text-white">
+                              <input
+                                type="radio"
+                                name="builderAction"
+                                value={act.value}
+                                checked={builderAction === act.value}
+                                onChange={() => setBuilderAction(act.value as any)}
+                                className="text-red-500 accent-red-500 focus:ring-0 cursor-pointer"
+                              />
+                              <span className={builderAction === act.value ? "text-white font-medium" : "text-[#8b949e]"}>{act.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Custom Integer Input */}
+                      {builderAction === "custom" && (
+                        <div className="animate-fade-in" id="builder-customint-group">
+                          <label className="block text-xs font-semibold text-[#8b949e] mb-1.5">{t.fridaCustomIntLabel}</label>
+                          <input
+                            type="number"
+                            value={builderCustomInt}
+                            onChange={(e) => setBuilderCustomInt(parseInt(e.target.value) || 0)}
+                            className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                            id="builder-input-customint"
+                          />
+                        </div>
+                      )}
+
+                      {/* Delay Start */}
+                      <div id="builder-delay-group">
+                        <label className="block text-xs font-semibold text-[#8b949e] mb-1.5">{t.fridaLabelDelay}</label>
+                        <input
+                          type="number"
+                          value={builderDelay}
+                          onChange={(e) => setBuilderDelay(parseInt(e.target.value) || 0)}
+                          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                          placeholder="0"
+                          id="builder-input-delay"
+                        />
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  {/* Right Generated Output View */}
+                  <div className="lg:col-span-7 flex flex-col gap-4" id="frida-builder-output">
+                    <div className="bg-[#1c2128] border border-[#30363d] rounded-xl p-5 flex flex-col gap-3 h-full">
+                      <div className="flex items-center justify-between border-b border-[#30363d] pb-3 mb-2" id="builder-output-header">
+                        <h4 className="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                          <Sliders className="w-3.5 h-3.5 text-red-500" />
+                          <span>{t.fridaGeneratedScriptHeader}</span>
+                        </h4>
+                        <button
+                          onClick={() => handleCopy(builderScript, "builder-script")}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+                          id="builder-copy-btn"
+                        >
+                          {copiedId === "builder-script" ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              <span className="text-emerald-400">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy Script</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="relative flex-grow flex" id="builder-code-editor">
+                        <pre className="bg-[#0d1117] border border-[#21262d] rounded-xl p-4 text-xs font-mono text-emerald-400 overflow-x-auto overflow-y-auto max-h-[480px] lg:max-h-none min-h-[300px] w-full leading-relaxed">
+                          {builderScript}
+                        </pre>
+                      </div>
+
+                      <div className="bg-[#0d1117] rounded-lg p-3 border border-[#21262d] text-xs font-mono text-[#8b949e] flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2" id="builder-run-tip">
+                        <span>{t.fridaRunTip}</span>
+                        <code className="text-cyan-400 break-all">frida -U -f {builderPkg} -l script.js</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: AI SCRIPT GENERATOR */}
+              {fridaSubTab === "ai" && (
+                <div className="flex flex-col gap-5 animate-fade-in" id="frida-ai-layout">
+                  {/* Prompt input card */}
+                  <div className="bg-[#1c2128] border border-[#30363d] rounded-xl p-5 flex flex-col gap-4" id="frida-ai-input-card">
+                    <div className="flex items-center gap-2 text-white font-bold text-sm" id="frida-ai-prompt-header">
+                      <Sparkles className="w-4 h-4 text-yellow-400" />
+                      <span>{t.fridaTabAI}</span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3" id="frida-ai-prompt-field">
+                      <input
+                        type="text"
+                        value={fridaAIPrompt}
+                        onChange={(e) => setFridaAIPrompt(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAIGenerateFrida()}
+                        className="flex-grow bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                        placeholder={t.fridaAIPromptPlaceholder}
+                        disabled={fridaAILoading}
+                        id="frida-ai-prompt-input"
+                      />
+                      <button
+                        onClick={handleAIGenerateFrida}
+                        disabled={fridaAILoading || !fridaAIPrompt.trim()}
+                        className="px-5 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+                        id="frida-ai-generate-btn"
+                      >
+                        {fridaAILoading ? (
+                          <>
+                            <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                            <span>{t.fridaAIBtn}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Pre-defined fast prompts */}
+                    <div className="flex flex-wrap gap-2 text-xs" id="frida-ai-quick-prompts">
+                      {[
+                        { label: "Bypass SSL Pinning (OkHttp3)", prompt: "Write a Frida script to bypass SSL pinning in OkHttp3" },
+                        { label: "Bypass Root Detection (RootBeer)", prompt: "Write a Frida script to bypass RootBeer root detection libraries" },
+                        { label: "Hook AES Crypto Keys", prompt: "Write a Frida script to hook javax.crypto.Cipher.init to print secret key and initialization vector" },
+                        { label: "Hook Logcat Strings", prompt: "Write a Frida script to intercept android.util.Log.d and print all debug messages" },
+                      ].map((qp, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setFridaAIPrompt(qp.prompt);
+                            // Auto-focus input
+                            const input = document.getElementById("frida-ai-prompt-input");
+                            if (input) input.focus();
+                          }}
+                          className="bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] hover:border-[#8b949e] text-[#8b949e] hover:text-white px-2.5 py-1 rounded-full transition-all text-[11px] cursor-pointer"
+                          id={`frida-ai-qp-${index}`}
+                        >
+                          {qp.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Errors display */}
+                  {fridaAIError && (
+                    <div className="bg-[#2a1215] border border-[#fa3b4c]/30 rounded-xl p-4 text-xs text-[#ff7b72] flex items-start gap-3 animate-fade-in" id="frida-ai-error-box">
+                      <AlertTriangle className="w-4 h-4 text-[#ff7b72] shrink-0 mt-0.5" />
+                      <span>{fridaAIError}</span>
+                    </div>
+                  )}
+
+                  {/* AI Output Result Layout */}
+                  {fridaAIResult && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in" id="frida-ai-result-panel">
+                      {/* Code Block */}
+                      <div className="bg-[#1c2128] border border-[#30363d] rounded-xl p-5 flex flex-col gap-3" id="frida-ai-result-script">
+                        <div className="flex items-center justify-between border-b border-[#30363d] pb-3" id="frida-ai-code-header">
+                          <h4 className="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                            <Code className="w-3.5 h-3.5 text-red-500" />
+                            <span>{t.fridaGeneratedScriptHeader}</span>
+                          </h4>
+                          <button
+                            onClick={() => handleCopy(fridaAIResult.script, "ai-script")}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+                            id="ai-copy-btn"
+                          >
+                            {copiedId === "ai-script" ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                <span className="text-emerald-400">Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Copy Script</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <pre className="bg-[#0d1117] border border-[#21262d] rounded-xl p-4 text-xs font-mono text-emerald-400 overflow-x-auto max-h-[450px] leading-relaxed">
+                          {fridaAIResult.script}
+                        </pre>
+                        <div className="bg-[#0d1117] rounded-lg p-3 border border-[#21262d] text-xs font-mono text-[#8b949e] flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1" id="ai-run-tip">
+                          <span>{t.fridaRunTip}</span>
+                          <code className="text-cyan-400 break-all">frida -U -f {packageName} -l script.js</code>
+                        </div>
+                      </div>
+
+                      {/* Explanation Block */}
+                      <div className="bg-[#1c2128] border border-[#30363d] rounded-xl p-5 flex flex-col gap-3" id="frida-ai-result-explanation">
+                        <h4 className="text-xs font-bold text-white border-b border-[#30363d] pb-3 uppercase tracking-wider flex items-center gap-2">
+                          <Info className="w-3.5 h-3.5 text-red-500" />
+                          <span>{t.fridaAIExplanationHeader}</span>
+                        </h4>
+                        <div className="text-xs text-[#c9d1d9] leading-relaxed whitespace-pre-wrap max-h-[450px] overflow-y-auto pr-2" id="frida-ai-explanation-text">
+                          {fridaAIResult.explanation}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Quick guide to install Frida on phone */}
@@ -2673,7 +3192,7 @@ export default function App() {
 
             {/* Modal Footer */}
             <div className="bg-secondary-bg border-t border-border-main px-6 py-3 flex items-center justify-between text-xs text-[#8b949e]" id="guide-modal-footer">
-              <span className="font-mono text-[10px]">v1.3.0</span>
+              <span className="font-mono text-[10px]">v1.3.1</span>
               <button
                 onClick={() => setIsGuideOpen(false)}
                 className="px-4 py-1.5 rounded-lg bg-primary-bg border border-border-main text-white hover:bg-[#30363d] transition-colors font-medium text-xs cursor-pointer"

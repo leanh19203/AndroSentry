@@ -152,3 +152,53 @@ Please reply in English.`;
 
   return response.text || "Xin lỗi, tôi không thể tạo câu trả lời vào lúc này.";
 }
+
+export interface FridaGenerationResult {
+  script: string;
+  explanation: string;
+}
+
+export async function generateFridaScript(prompt: string, language: string = "vi"): Promise<FridaGenerationResult> {
+  const ai = getAiClient();
+  if (!ai) {
+    throw new Error("Không thể kết nối với API Gemini. Vui lòng cấu hình API Key trong Settings > Secrets.");
+  }
+
+  let languagePrompt = "Hãy trả về kết quả bằng tiếng Việt dưới định dạng JSON với cấu trúc sau:";
+  if (language === "en") {
+    languagePrompt = "Please return the results in English under the following JSON structure:";
+  } else if (language === "ja") {
+    languagePrompt = "結果を以下のJSON構造に従って日本語で返してください。";
+  }
+
+  const systemInstruction = `Bạn là một chuyên gia Pentester Android hàng đầu và là bậc thầy về viết Frida scripts (Frida API, Javascript).
+Nhiệm vụ của bạn là nhận yêu cầu từ người dùng và sinh một đoạn mã script Frida Javascript chất lượng cao, chạy ổn định, không bị crash ứng dụng, hỗ trợ đầy đủ overload trong Java.use khi cần, có xử lý ngoại lệ và hiển thị thông tin log rõ ràng bằng console.log.
+
+${languagePrompt}
+{
+  "script": "<Toàn bộ đoạn mã Javascript của Frida script, ví dụ: Java.perform(function() { ... })>",
+  "explanation": "<Giải thích từng bước súc tích về cách hoạt động của script này và cách chạy nó bằng lệnh Frida cơ bản>"
+}
+
+Chú ý quan trọng: Chỉ trả về chuỗi JSON thuần túy, không bao bọc bằng ký tự markdown như \`\`\`json ở đầu và cuối.`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: prompt,
+    config: {
+      systemInstruction: systemInstruction,
+      responseMimeType: "application/json",
+    },
+  });
+
+  const resultText = response.text || "{}";
+  try {
+    return JSON.parse(resultText);
+  } catch (err) {
+    return {
+      script: `// Error parsing AI output. Here is the raw text from the model:\n${resultText}`,
+      explanation: "Lỗi phân tích cú pháp kết quả trả về từ AI."
+    };
+  }
+}
+
