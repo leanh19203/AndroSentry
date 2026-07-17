@@ -48,6 +48,17 @@ export const getDecompiledManifestSchema = z.object({
   }),
 });
 
+// 5. Schema for /api/scan (Static Security Scanner)
+export const staticScanSchema = z.object({
+  body: z.object({
+    workspaceDir: z
+      .string()
+      .regex(/^[a-zA-Z0-9_\-]+$/, "Thư mục quy trình chỉ được chứa chữ cái, số, gạch dưới và gạch ngang")
+      .optional(),
+    simulation: z.boolean().optional(),
+  }),
+});
+
 // Express validation helper middleware generator
 export function validate(schema: z.ZodTypeAny) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {

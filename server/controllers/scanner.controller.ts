@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import path from "path";
 import { ScannerService, ScanResult } from "../services/scanner.service";
 
 /**
@@ -92,11 +93,46 @@ export async function handleRunStaticScan(req: Request, res: Response): Promise<
     return;
   }
 
+  // Check if request originates from localhost (safety guard for public staging/Cloud Run)
+  // ONLY rely on req.ip (peer IP) to prevent Host Header spoofing / Host Header Injection
+  const isLocal =
+    req.ip === "127.0.0.1" ||
+    req.ip === "::1" ||
+    req.ip === "::ffff:127.0.0.1";
+
+  // Block real execution if request is not originating from localhost
+  if (!isLocal) {
+    res.status(403).json({
+      error: "Vì lý do bảo mật, tính năng quét phân tích tĩnh trên thư mục thực tế bị vô hiệu hóa trên môi trường Cloud/Web công cộng hoặc môi trường mạng từ xa. Bạn vẫn có thể trải nghiệm toàn bộ giao diện bằng cách kích hoạt chế độ 'Simulation' (Mô phỏng) hoặc chạy ứng dụng trên Kali Linux của bạn (localhost)!",
+      isLocal: false,
+    });
+    return;
+  }
+
   // Real engine scan
   let targetDir = "";
   if (workspaceDir) {
-    // Standard relative or workspace directory
-    targetDir = workspaceDir.includes("/") ? workspaceDir : `/workspaces/${workspaceDir}`;
+    // Validate that workspaceDir is safe and has no path traversal components
+    if (!/^[a-zA-Z0-9_\-]+$/.test(workspaceDir)) {
+      res.status(400).json({
+        error: "Tên thư mục quy trình phân tích không hợp lệ. Chỉ chấp nhận chữ cái, số, gạch ngang và gạch dưới."
+      });
+      return;
+    }
+
+    if (workspaceDir.startsWith("task-")) {
+      targetDir = path.resolve(process.cwd(), "workspaces", workspaceDir);
+    } else {
+      targetDir = path.resolve(process.cwd(), workspaceDir);
+    }
+
+    // Safety guard: ensure resolved path is strictly within process.cwd()
+    if (!targetDir.startsWith(process.cwd())) {
+      res.status(400).json({
+        error: "Yêu cầu bị từ chối: Cảnh báo vượt quyền đường dẫn không hợp lệ."
+      });
+      return;
+    }
   } else {
     // Auto-detect latest workspace
     const latest = ScannerService.getLatestWorkspaceDir();

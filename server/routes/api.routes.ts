@@ -19,6 +19,7 @@ import {
   chatSchema,
   executeCommandSchema,
   getDecompiledManifestSchema,
+  staticScanSchema,
 } from "../middleware/validation.middleware";
 
 const router = Router();
@@ -48,7 +49,7 @@ router.post("/execute-command", validate(executeCommandSchema), handleExecuteCom
 router.get("/get-decompiled-manifest", validate(getDecompiledManifestSchema), handleGetDecompiledManifest);
 
 // 5.5. Quick Static Analysis / Static Security Scanner
-router.post("/scan", handleRunStaticScan);
+router.post("/scan", validate(staticScanSchema), handleRunStaticScan);
 
 // 6. Task Queue Management Endpoints (Phase 4 Integration)
 router.post("/tasks", validate(executeCommandSchema), handleCreateTask);
