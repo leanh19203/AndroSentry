@@ -39,6 +39,25 @@ import { LANGUAGES, TRANSLATIONS, ADB_COMMANDS_TRANSLATIONS, APKTOOL_STEPS_TRANS
 import { getSimulatedOutput } from "./simulation";
 import StaticScanTab from "./components/StaticScanTab";
 
+// Safe localStorage wrapper to prevent fatal crashes in sandboxed iframe environments
+const safeStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.warn("localStorage.getItem blocked by sandbox security:", e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.warn("localStorage.setItem blocked by sandbox security:", e);
+    }
+  }
+};
+
 export const THEME_CONFIGS = {
   "kali-dark": {
     name: "Kali Cyber",
@@ -170,13 +189,15 @@ const SAMPLE_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
 
 export default function App() {
   const [language, setLanguage] = useState<string>(() => {
-    return localStorage.getItem("kali-android-pentest-lang") || "vi";
+    return safeStorage.getItem("kali-android-pentest-lang") || "vi";
   });
 
   const t = TRANSLATIONS[language] || TRANSLATIONS["vi"];
 
   const [activeTab, setActiveTab] = useState<"adb" | "manifest" | "apktool" | "frida" | "chat" | "staticScan">("adb");
   const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // General variables for interactive builders
@@ -652,12 +673,12 @@ ${delayCode}
 
   // Theme state: "kali-dark" | "nord-tech" | "dracula" | "matrix-forest" | "white-hat"
   const [currentTheme, setCurrentTheme] = useState<string>(() => {
-    return localStorage.getItem("kali-android-pentest-theme") || "kali-dark";
+    return safeStorage.getItem("kali-android-pentest-theme") || "kali-dark";
   });
 
   const changeTheme = (newTheme: string) => {
     setCurrentTheme(newTheme);
-    localStorage.setItem("kali-android-pentest-theme", newTheme);
+    safeStorage.setItem("kali-android-pentest-theme", newTheme);
   };
 
   useEffect(() => {
@@ -1318,44 +1339,94 @@ ${delayCode}
  
           {/* Quick status checks */}
           <div className="flex flex-wrap items-center gap-3 text-xs" id="status-checks">
-            {/* Theme Selector */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-bg border border-border-main text-txt-muted hover:border-accent/40 transition-all duration-300" id="theme-selector-container">
-              <Palette className="w-3.5 h-3.5 text-accent transition-colors duration-300" />
-              <select
-                value={currentTheme}
-                onChange={(e) => changeTheme(e.target.value)}
-                className="bg-transparent border-none text-white text-xs focus:ring-0 focus:outline-none font-medium cursor-pointer"
-                id="theme-select"
+            {/* Theme Selector (Custom Dropdown) */}
+            <div className="relative" id="theme-selector-container">
+              <button
+                onClick={() => {
+                  setIsThemeDropdownOpen(!isThemeDropdownOpen);
+                  setIsLangDropdownOpen(false);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-bg border border-border-main text-txt-muted hover:border-accent/40 transition-all duration-300 cursor-pointer h-[36px]"
+                id="theme-select-btn"
                 title={t.themeSelector}
               >
-                {Object.entries(THEME_CONFIGS).map(([key, config]) => (
-                  <option key={key} value={key} className="bg-secondary-bg text-txt-main">
-                    {config.name}
-                  </option>
-                ))}
-              </select>
+                <Palette className="w-3.5 h-3.5 text-accent transition-colors duration-300" />
+                <span className="text-txt-main text-xs font-semibold">
+                  {THEME_CONFIGS[currentTheme as keyof typeof THEME_CONFIGS]?.name || "Kali Cyber"}
+                </span>
+                <ChevronDown className="w-3 h-3 transition-transform duration-200 text-txt-muted" style={{ transform: isThemeDropdownOpen ? 'rotate(180deg)' : 'none' }} />
+              </button>
+
+              {isThemeDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setIsThemeDropdownOpen(false)}></div>
+                  <div className="absolute left-0 mt-1.5 w-48 rounded-xl bg-secondary-bg border border-border-main shadow-2xl p-1.5 z-40 flex flex-col gap-1">
+                    {Object.entries(THEME_CONFIGS).map(([key, config]) => (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          changeTheme(key);
+                          setIsThemeDropdownOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-left ${
+                          currentTheme === key
+                            ? "bg-accent/10 text-accent font-semibold"
+                            : "text-txt-main hover:bg-primary-bg"
+                        }`}
+                      >
+                        <span>{config.name}</span>
+                        {currentTheme === key && <Check className="w-3.5 h-3.5 text-accent" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Language Selector */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-bg border border-border-main text-txt-muted hover:border-accent/40 transition-all duration-300" id="language-selector-container">
-              <span className="text-xs">{LANGUAGES.find(l => l.code === language)?.flag || "🇻🇳"}</span>
-              <select
-                value={language}
-                onChange={(e) => {
-                  const newLang = e.target.value;
-                  setLanguage(newLang);
-                  localStorage.setItem("kali-android-pentest-lang", newLang);
+            {/* Language Selector (Custom Dropdown) */}
+            <div className="relative" id="language-selector-container">
+              <button
+                onClick={() => {
+                  setIsLangDropdownOpen(!isLangDropdownOpen);
+                  setIsThemeDropdownOpen(false);
                 }}
-                className="bg-transparent border-none text-white text-xs focus:ring-0 focus:outline-none font-medium cursor-pointer"
-                id="language-select"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-bg border border-border-main text-txt-muted hover:border-accent/40 transition-all duration-300 cursor-pointer h-[36px]"
+                id="language-select-btn"
                 title="Language"
               >
-                {LANGUAGES.map((lang) => (
-                  <option key={lang.code} value={lang.code} className="bg-secondary-bg text-txt-main">
-                    {lang.name}
-                  </option>
-                ))}
-              </select>
+                <span className="text-xs">{LANGUAGES.find(l => l.code === language)?.flag || "🇻🇳"}</span>
+                <span className="text-txt-main text-xs font-semibold">
+                  {LANGUAGES.find(l => l.code === language)?.name || "Tiếng Việt"}
+                </span>
+                <ChevronDown className="w-3 h-3 transition-transform duration-200 text-txt-muted" style={{ transform: isLangDropdownOpen ? 'rotate(180deg)' : 'none' }} />
+              </button>
+
+              {isLangDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setIsLangDropdownOpen(false)}></div>
+                  <div className="absolute left-0 mt-1.5 w-44 rounded-xl bg-secondary-bg border border-border-main shadow-2xl p-1.5 z-40 flex flex-col gap-1">
+                    {LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguage(lang.code);
+                          safeStorage.setItem("kali-android-pentest-lang", lang.code);
+                          setIsLangDropdownOpen(false);
+                        }}
+                        className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-left ${
+                          language === lang.code
+                            ? "bg-accent/10 text-accent font-semibold"
+                            : "text-txt-main hover:bg-primary-bg"
+                        }`}
+                      >
+                        <span>{lang.flag}</span>
+                        <span className="flex-1">{lang.name}</span>
+                        {language === lang.code && <Check className="w-3.5 h-3.5 text-accent" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             <button 
@@ -1516,8 +1587,8 @@ ${delayCode}
             {isTabDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setIsTabDropdownOpen(false)}></div>
-                <div className="absolute right-0 mt-1.5 w-60 rounded-xl bg-[#161b22] border border-[#30363d] shadow-2xl p-1.5 z-40 flex flex-col gap-1 animate-slide-down">
-                  <div className="px-2.5 py-1.5 text-[10px] text-[#8b949e] font-mono border-b border-[#21262d] mb-1">
+                <div className="absolute right-0 mt-1.5 w-60 rounded-xl bg-secondary-bg border border-border-main shadow-2xl p-1.5 z-40 flex flex-col gap-1 animate-slide-down">
+                  <div className="px-2.5 py-1.5 text-[10px] text-txt-muted font-mono border-b border-border-head mb-1">
                     {t.tabMoreBtnHeader}
                   </div>
                   
@@ -1525,12 +1596,12 @@ ${delayCode}
                     onClick={() => { setActiveTab("adb"); setIsTabDropdownOpen(false); }}
                     className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
                       activeTab === "adb" 
-                        ? "bg-accent/10 text-white font-semibold" 
-                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                        ? "bg-accent/10 text-accent font-semibold" 
+                        : "text-txt-main hover:bg-primary-bg"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Terminal className="w-3.5 h-3.5 text-[#8b949e]" />
+                      <Terminal className="w-3.5 h-3.5 text-txt-muted" />
                       <span>{t.tabAdb}</span>
                     </div>
                     {activeTab === "adb" && <Check className="w-3.5 h-3.5 text-accent" />}
@@ -1540,8 +1611,8 @@ ${delayCode}
                     onClick={() => { setActiveTab("manifest"); setIsTabDropdownOpen(false); }}
                     className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
                       activeTab === "manifest" 
-                        ? "bg-accent/10 text-white font-semibold" 
-                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                        ? "bg-accent/10 text-accent font-semibold" 
+                        : "text-txt-main hover:bg-primary-bg"
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -1555,12 +1626,12 @@ ${delayCode}
                     onClick={() => { setActiveTab("apktool"); setIsTabDropdownOpen(false); }}
                     className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
                       activeTab === "apktool" 
-                        ? "bg-accent/10 text-white font-semibold" 
-                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                        ? "bg-accent/10 text-accent font-semibold" 
+                        : "text-txt-main hover:bg-primary-bg"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Layers className="w-3.5 h-3.5 text-[#8b949e]" />
+                      <Layers className="w-3.5 h-3.5 text-txt-muted" />
                       <span>{t.tabApktool}</span>
                     </div>
                     {activeTab === "apktool" && <Check className="w-3.5 h-3.5 text-accent" />}
@@ -1570,12 +1641,12 @@ ${delayCode}
                     onClick={() => { setActiveTab("frida"); setIsTabDropdownOpen(false); }}
                     className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
                       activeTab === "frida" 
-                        ? "bg-accent/10 text-white font-semibold" 
-                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                        ? "bg-accent/10 text-accent font-semibold" 
+                        : "text-txt-main hover:bg-primary-bg"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Cpu className="w-3.5 h-3.5 text-[#8b949e]" />
+                      <Cpu className="w-3.5 h-3.5 text-txt-muted" />
                       <span>{t.tabFrida}</span>
                     </div>
                     {activeTab === "frida" && <Check className="w-3.5 h-3.5 text-accent" />}
@@ -1585,8 +1656,8 @@ ${delayCode}
                     onClick={() => { setActiveTab("chat"); setIsTabDropdownOpen(false); }}
                     className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
                       activeTab === "chat" 
-                        ? "bg-accent/10 text-white font-semibold" 
-                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                        ? "bg-accent/10 text-accent font-semibold" 
+                        : "text-txt-main hover:bg-primary-bg"
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -1600,8 +1671,8 @@ ${delayCode}
                     onClick={() => { setActiveTab("staticScan"); setIsTabDropdownOpen(false); }}
                     className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
                       activeTab === "staticScan" 
-                        ? "bg-accent/10 text-white font-semibold" 
-                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                        ? "bg-accent/10 text-accent font-semibold" 
+                        : "text-txt-main hover:bg-primary-bg"
                     }`}
                   >
                     <div className="flex items-center gap-2">

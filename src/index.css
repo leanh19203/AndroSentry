@@ -37,9 +37,20 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-/* Custom transitions for all elements when changing themes */
-*, *::before, *::after {
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease-out;
+/* Custom transitions for key containers when changing themes (Avoid wildcard * transition to prevent severe rendering crashes on dynamic/drag events) */
+.theme-transition, 
+.bg-primary-bg, 
+.bg-secondary-bg, 
+.border-border-main, 
+.text-txt-main, 
+.text-txt-muted, 
+header, 
+footer, 
+aside, 
+button {
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Override compiled Tailwind hex classes with our CSS variables */
