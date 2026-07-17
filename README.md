@@ -54,3 +54,4 @@ Bạn chỉ cần xóa thư mục chứa dự án mà bạn đã tải về máy
 ```bash
 rm -rf ~/AndroSentry
 ```
+

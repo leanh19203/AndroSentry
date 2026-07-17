@@ -12,8 +12,8 @@ Chúng tôi hiện tại chỉ hỗ trợ và vá lỗi bảo mật cho phiên b
 
 | Phiên bản | Trạng thái hỗ trợ |
 | :--- | :--- |
-| **v1.2.1** (Bản mới nhất) | :white_check_mark: Được hỗ trợ |
-| < v1.2.0 | :x: Không hỗ trợ |
+| **v1.3.0** (Bản mới nhất) | :white_check_mark: Được hỗ trợ |
+| < v1.3.0 | :x: Không hỗ trợ |
 
 ---
 

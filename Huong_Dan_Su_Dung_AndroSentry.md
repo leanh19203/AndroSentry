@@ -2,7 +2,7 @@
 ## Tài liệu Giới thiệu, Mô tả và Hướng dẫn sử dụng chi tiết
 
 - **Được phát triển bởi:** Lê Đức Anh
-- **Phiên bản phần mềm:** v1.2.1
+- **Phiên bản phần mềm:** v1.3.0
 - **Hệ điều hành hỗ trợ:** Linux (Kali Linux, Ubuntu), macOS (hoặc Windows thông qua WSL/Docker)
 - **Github:** https://github.com/leanh19203/AndroSentry
 

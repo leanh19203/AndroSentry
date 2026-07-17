@@ -27,12 +27,15 @@ import {
   BookOpen,
   Eye,
   FolderOpen,
-  X
+  X,
+  Menu,
+  ChevronDown
 } from "lucide-react";
 import { ADB_COMMANDS, APKTOOL_STEPS, FRIDA_SCRIPTS } from "./commandsData";
 import { AdbCommand, ManifestFinding, AuditResult, ChatMessage } from "./types";
 import { LANGUAGES, TRANSLATIONS, ADB_COMMANDS_TRANSLATIONS, APKTOOL_STEPS_TRANSLATIONS, FRIDA_SCRIPTS_TRANSLATIONS } from "./languages";
 import { getSimulatedOutput } from "./simulation";
+import StaticScanTab from "./components/StaticScanTab";
 
 export const THEME_CONFIGS = {
   "kali-dark": {
@@ -170,7 +173,8 @@ export default function App() {
 
   const t = TRANSLATIONS[language] || TRANSLATIONS["vi"];
 
-  const [activeTab, setActiveTab] = useState<"adb" | "manifest" | "apktool" | "frida" | "chat">("adb");
+  const [activeTab, setActiveTab] = useState<"adb" | "manifest" | "apktool" | "frida" | "chat" | "staticScan">("adb");
+  const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // General variables for interactive builders
@@ -281,13 +285,7 @@ export default function App() {
   const [showTerminal, setShowTerminal] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [isDraggingTerminal, setIsDraggingTerminal] = useState(false);
-  const [simulationMode, setSimulationMode] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-      return !isLocal;
-    }
-    return true;
-  });
+  const [simulationMode, setSimulationMode] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isDraggingTerminal) return;
@@ -1120,7 +1118,7 @@ export default function App() {
             </div>
             <div id="logo-text">
               <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                {t.title} <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.2.1</span>
+                {t.title} <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono transition-all duration-300">v1.3.0</span>
               </h1>
               <p className="text-xs text-txt-muted transition-colors duration-300">{t.subtitle}</p>
             </div>
@@ -1224,73 +1222,206 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6" id="main-content">
         
         {/* TAB NAVIGATION */}
-        <div className="flex flex-wrap gap-2 border-b border-border-head pb-px" id="tab-navigation">
-          <button
-            id="tab-adb-btn"
-            onClick={() => setActiveTab("adb")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === "adb"
-                ? "border-accent text-txt-main bg-secondary-bg"
-                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
-            }`}
-          >
-            <Terminal className="w-4 h-4" />
-            <span>{t.tabAdb}</span>
-          </button>
+        <div className="flex items-center justify-between border-b border-border-head gap-4 relative pb-px" id="tab-navigation-container">
+          {/* Subtle horizontal gradient overlay to indicate scroll availability on mobile */}
+          <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-primary-bg to-transparent pointer-events-none z-10 md:hidden opacity-40"></div>
+          
+          <div className="flex-1 flex overflow-x-auto whitespace-nowrap flex-nowrap gap-1.5 scrollbar-none scroll-smooth pb-px w-full" id="tab-navigation">
+            <button
+              id="tab-adb-btn"
+              onClick={() => setActiveTab("adb")}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex-shrink-0 ${
+                activeTab === "adb"
+                  ? "border-accent text-txt-main bg-secondary-bg"
+                  : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
+              }`}
+            >
+              <Terminal className="w-4 h-4" />
+              <span>{t.tabAdb}</span>
+            </button>
 
-          <button
-            id="tab-manifest-btn"
-            onClick={() => setActiveTab("manifest")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === "manifest"
-                ? "border-accent text-txt-main bg-secondary-bg"
-                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
-            }`}
-          >
-            <FileCode className="w-4 h-4" />
-            <span>{t.tabManifest}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-normal">{t.aiBadge}</span>
-          </button>
+            <button
+              id="tab-manifest-btn"
+              onClick={() => setActiveTab("manifest")}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex-shrink-0 ${
+                activeTab === "manifest"
+                  ? "border-accent text-txt-main bg-secondary-bg"
+                  : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
+              }`}
+            >
+              <FileCode className="w-4 h-4" />
+              <span>{t.tabManifest}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-normal">{t.aiBadge}</span>
+            </button>
 
-          <button
-            id="tab-apktool-btn"
-            onClick={() => setActiveTab("apktool")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === "apktool"
-                ? "border-accent text-txt-main bg-secondary-bg"
-                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            <span>{t.tabApktool}</span>
-          </button>
+            <button
+              id="tab-apktool-btn"
+              onClick={() => setActiveTab("apktool")}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex-shrink-0 ${
+                activeTab === "apktool"
+                  ? "border-accent text-txt-main bg-secondary-bg"
+                  : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>{t.tabApktool}</span>
+            </button>
 
-          <button
-            id="tab-frida-btn"
-            onClick={() => setActiveTab("frida")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === "frida"
-                ? "border-accent text-txt-main bg-secondary-bg"
-                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
-            }`}
-          >
-            <Cpu className="w-4 h-4" />
-            <span>{t.tabFrida}</span>
-          </button>
+            <button
+              id="tab-frida-btn"
+              onClick={() => setActiveTab("frida")}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex-shrink-0 ${
+                activeTab === "frida"
+                  ? "border-accent text-txt-main bg-secondary-bg"
+                  : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
+              }`}
+            >
+              <Cpu className="w-4 h-4" />
+              <span>{t.tabFrida}</span>
+            </button>
 
-          <button
-            id="tab-chat-btn"
-            onClick={() => setActiveTab("chat")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === "chat"
-                ? "border-accent text-txt-main bg-secondary-bg"
-                : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>{t.tabChat}</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-          </button>
+            <button
+              id="tab-chat-btn"
+              onClick={() => setActiveTab("chat")}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex-shrink-0 ${
+                activeTab === "chat"
+                  ? "border-accent text-txt-main bg-secondary-bg"
+                  : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>{t.tabChat}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            </button>
+
+            <button
+              id="tab-staticscan-btn"
+              onClick={() => setActiveTab("staticScan")}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex-shrink-0 ${
+                activeTab === "staticScan"
+                  ? "border-accent text-txt-main bg-secondary-bg"
+                  : "border-transparent text-txt-muted hover:text-txt-main hover:bg-secondary-bg/30"
+              }`}
+            >
+              <Shield className="w-4 h-4 text-red-500 animate-pulse" />
+              <span>{t.tabStaticScan}</span>
+            </button>
+          </div>
+
+          {/* Persistent Quick Jump Dropdown Button */}
+          <div className="relative pb-px flex-shrink-0" id="tab-more-dropdown-container">
+            <button
+              onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-secondary-bg hover:bg-[#30363d] text-txt-muted hover:text-white border border-border-main cursor-pointer transition-all h-[36px]"
+              id="tab-more-btn"
+              title={t.tabMoreBtnTitle}
+            >
+              <Menu className="w-3.5 h-3.5 text-accent" />
+              <span className="hidden sm:inline">{t.tabMoreBtnLabel}</span>
+              <ChevronDown className="w-3 h-3 transition-transform duration-200" style={{ transform: isTabDropdownOpen ? 'rotate(180deg)' : 'none' }} />
+            </button>
+            
+            {isTabDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setIsTabDropdownOpen(false)}></div>
+                <div className="absolute right-0 mt-1.5 w-60 rounded-xl bg-[#161b22] border border-[#30363d] shadow-2xl p-1.5 z-40 flex flex-col gap-1 animate-slide-down">
+                  <div className="px-2.5 py-1.5 text-[10px] text-[#8b949e] font-mono border-b border-[#21262d] mb-1">
+                    {t.tabMoreBtnHeader}
+                  </div>
+                  
+                  <button
+                    onClick={() => { setActiveTab("adb"); setIsTabDropdownOpen(false); }}
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                      activeTab === "adb" 
+                        ? "bg-accent/10 text-white font-semibold" 
+                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Terminal className="w-3.5 h-3.5 text-[#8b949e]" />
+                      <span>{t.tabAdb}</span>
+                    </div>
+                    {activeTab === "adb" && <Check className="w-3.5 h-3.5 text-accent" />}
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab("manifest"); setIsTabDropdownOpen(false); }}
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                      activeTab === "manifest" 
+                        ? "bg-accent/10 text-white font-semibold" 
+                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileCode className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>{t.tabManifest}</span>
+                    </div>
+                    {activeTab === "manifest" && <Check className="w-3.5 h-3.5 text-accent" />}
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab("apktool"); setIsTabDropdownOpen(false); }}
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                      activeTab === "apktool" 
+                        ? "bg-accent/10 text-white font-semibold" 
+                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5 text-[#8b949e]" />
+                      <span>{t.tabApktool}</span>
+                    </div>
+                    {activeTab === "apktool" && <Check className="w-3.5 h-3.5 text-accent" />}
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab("frida"); setIsTabDropdownOpen(false); }}
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                      activeTab === "frida" 
+                        ? "bg-accent/10 text-white font-semibold" 
+                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Cpu className="w-3.5 h-3.5 text-[#8b949e]" />
+                      <span>{t.tabFrida}</span>
+                    </div>
+                    {activeTab === "frida" && <Check className="w-3.5 h-3.5 text-accent" />}
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab("chat"); setIsTabDropdownOpen(false); }}
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                      activeTab === "chat" 
+                        ? "bg-accent/10 text-white font-semibold" 
+                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{t.tabChat}</span>
+                    </div>
+                    {activeTab === "chat" && <Check className="w-3.5 h-3.5 text-accent" />}
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab("staticScan"); setIsTabDropdownOpen(false); }}
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                      activeTab === "staticScan" 
+                        ? "bg-accent/10 text-white font-semibold" 
+                        : "text-[#c9d1d9] hover:bg-[#21262d]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                      <span>{t.tabStaticScan}</span>
+                    </div>
+                    {activeTab === "staticScan" && <Check className="w-3.5 h-3.5 text-accent" />}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* ========================================================
@@ -2327,6 +2458,14 @@ export default function App() {
           </div>
         )}
 
+        {activeTab === "staticScan" && (
+          <StaticScanTab
+            simulationMode={simulationMode}
+            language={language}
+            t={t}
+          />
+        )}
+
       </main>
 
       {/* PERSISTENT KALI LIVE TERMINAL DRAWER */}
@@ -2534,7 +2673,7 @@ export default function App() {
 
             {/* Modal Footer */}
             <div className="bg-secondary-bg border-t border-border-main px-6 py-3 flex items-center justify-between text-xs text-[#8b949e]" id="guide-modal-footer">
-              <span className="font-mono text-[10px]">v1.2.1</span>
+              <span className="font-mono text-[10px]">v1.3.0</span>
               <button
                 onClick={() => setIsGuideOpen(false)}
                 className="px-4 py-1.5 rounded-lg bg-primary-bg border border-border-main text-white hover:bg-[#30363d] transition-colors font-medium text-xs cursor-pointer"

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { handleAuditManifest, handleChat } from "../controllers/ai.controller";
 import { handleExecuteCommand } from "../controllers/command.controller";
+import { handleRunStaticScan } from "../controllers/scanner.controller";
 import {
   handleGetDecompiledManifest,
   handleDownloadGuideDocx,
@@ -42,6 +43,9 @@ router.post("/execute-command", validate(executeCommandSchema), handleExecuteCom
 
 // 5. Decompiled Manifest Retrieval
 router.get("/get-decompiled-manifest", validate(getDecompiledManifestSchema), handleGetDecompiledManifest);
+
+// 5.5. Quick Static Analysis / Static Security Scanner
+router.post("/scan", handleRunStaticScan);
 
 // 6. Task Queue Management Endpoints (Phase 4 Integration)
 router.post("/tasks", validate(executeCommandSchema), handleCreateTask);
