@@ -1616,7 +1616,7 @@ ${delayCode}
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <FileCode className="w-3.5 h-3.5 text-cyan-400" />
+                      <FileCode className="w-3.5 h-3.5 text-accent" />
                       <span>{t.tabManifest}</span>
                     </div>
                     {activeTab === "manifest" && <Check className="w-3.5 h-3.5 text-accent" />}
@@ -1661,7 +1661,7 @@ ${delayCode}
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                      <MessageSquare className="w-3.5 h-3.5 text-accent" />
                       <span>{t.tabChat}</span>
                     </div>
                     {activeTab === "chat" && <Check className="w-3.5 h-3.5 text-accent" />}
@@ -2030,7 +2030,7 @@ ${delayCode}
                     id="manifest-textarea"
                     value={manifestText}
                     onChange={(e) => setManifestText(e.target.value)}
-                    className="w-full h-[400px] bg-[#0d1117] border border-[#30363d] rounded-lg p-4 font-mono text-xs text-emerald-400 focus:outline-none focus:border-red-500 resize-y leading-relaxed"
+                    className="w-full h-[400px] dark-code-block border rounded-lg p-4 font-mono text-xs text-emerald-400 focus:outline-none focus:border-red-500 resize-y leading-relaxed"
                     placeholder={t.manifestTextareaPlaceholder}
                   />
                 </div>
@@ -2566,7 +2566,7 @@ ${delayCode}
                         <p className="text-xs text-[#8b949e] mt-1 mb-4">{script.description}</p>
 
                         <div className="relative" id={`code-container-${idx}`}>
-                          <pre className="bg-[#0d1117] border border-[#21262d] rounded-lg p-3 text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[160px] leading-relaxed">
+                          <pre className="dark-code-block border rounded-lg p-3 text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[160px] leading-relaxed">
                             {script.code}
                           </pre>
                           <button
@@ -2733,12 +2733,12 @@ ${delayCode}
                       </div>
 
                       <div className="relative flex-grow flex" id="builder-code-editor">
-                        <pre className="bg-[#0d1117] border border-[#21262d] rounded-xl p-4 text-xs font-mono text-emerald-400 overflow-x-auto overflow-y-auto max-h-[480px] lg:max-h-none min-h-[300px] w-full leading-relaxed">
+                        <pre className="dark-code-block border rounded-xl p-4 text-xs font-mono text-emerald-400 overflow-x-auto overflow-y-auto max-h-[480px] lg:max-h-none min-h-[300px] w-full leading-relaxed">
                           {builderScript}
                         </pre>
                       </div>
 
-                      <div className="bg-[#0d1117] rounded-lg p-3 border border-[#21262d] text-xs font-mono text-[#8b949e] flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2" id="builder-run-tip">
+                      <div className="dark-code-block rounded-lg p-3 border text-xs font-mono text-[#8b949e] flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2" id="builder-run-tip">
                         <span>{t.fridaRunTip}</span>
                         <code className="text-cyan-400 break-all">frida -U -f {builderPkg} -l script.js</code>
                       </div>
@@ -2849,10 +2849,10 @@ ${delayCode}
                             )}
                           </button>
                         </div>
-                        <pre className="bg-[#0d1117] border border-[#21262d] rounded-xl p-4 text-xs font-mono text-emerald-400 overflow-x-auto max-h-[450px] leading-relaxed">
+                        <pre className="dark-code-block border rounded-xl p-4 text-xs font-mono text-emerald-400 overflow-x-auto max-h-[450px] leading-relaxed">
                           {fridaAIResult.script}
                         </pre>
-                        <div className="bg-[#0d1117] rounded-lg p-3 border border-[#21262d] text-xs font-mono text-[#8b949e] flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1" id="ai-run-tip">
+                        <div className="dark-code-block rounded-lg p-3 border text-xs font-mono text-[#8b949e] flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1" id="ai-run-tip">
                           <span>{t.fridaRunTip}</span>
                           <code className="text-cyan-400 break-all">frida -U -f {packageName} -l script.js</code>
                         </div>
@@ -2888,17 +2888,17 @@ ${delayCode}
                 <div className="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]" id="frida-step-2">
                   <span className="font-bold text-white block mb-1">{t.fridaStep2Title}</span>
                   {t.fridaStep2Desc}
-                  <code className="block mt-1 text-emerald-400 bg-[#161b22] p-1 rounded">adb push frida-server /data/local/tmp/</code>
+                  <code className="block mt-1 p-1 rounded font-mono dark-code-snippet">adb push frida-server /data/local/tmp/</code>
                 </div>
                 <div className="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]" id="frida-step-3">
                   <span className="font-bold text-white block mb-1">{t.fridaStep3Title}</span>
                   {t.fridaStep3Desc}
-                  <code className="block mt-1 text-emerald-400 bg-[#161b22] p-1 rounded">adb shell "chmod 755 /data/local/tmp/frida-server"</code>
+                  <code className="block mt-1 p-1 rounded font-mono dark-code-snippet">adb shell "chmod 755 /data/local/tmp/frida-server"</code>
                 </div>
                 <div className="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]" id="frida-step-4">
                   <span className="font-bold text-white block mb-1">{t.fridaStep4Title}</span>
                   {t.fridaStep4Desc}
-                  <code className="block mt-1 text-emerald-400 bg-[#161b22] p-1 rounded">adb shell "su -c '/data/local/tmp/frida-server &'"</code>
+                  <code className="block mt-1 p-1 rounded font-mono dark-code-snippet">adb shell "su -c '/data/local/tmp/frida-server &'"</code>
                 </div>
               </div>
             </div>
@@ -2988,7 +2988,7 @@ ${delayCode}
                 </div>
 
                 {/* Chat content stream */}
-                <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-[#0d1117]/30" id="chat-messages-container">
+                <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-primary-bg/30" id="chat-messages-container">
                   {chatMessages.map((msg) => (
                     <div
                        key={msg.id}
@@ -2997,12 +2997,12 @@ ${delayCode}
                       }`}
                       id={`msg-bubble-${msg.id}`}
                     >
-                      <span className="text-[10px] text-[#8b949e] mb-1 font-mono">{msg.timestamp}</span>
+                      <span className="text-[10px] text-txt-muted mb-1 font-mono">{msg.timestamp}</span>
                       <div
                         className={`rounded-xl p-3 px-4 text-sm leading-relaxed ${
                           msg.role === "user"
-                            ? "bg-red-600 text-white rounded-tr-none"
-                            : "bg-[#21262d] text-[#c9d1d9] border border-[#30363d] rounded-tl-none"
+                            ? "bg-accent text-white rounded-tr-none"
+                            : "bg-secondary-bg text-txt-main border border-border-main rounded-tl-none"
                         }`}
                         id={`msg-text-${msg.id}`}
                       >
@@ -3014,30 +3014,30 @@ ${delayCode}
                   {/* AI Generating Indicator */}
                   {isSendingChat && (
                     <div className="self-start flex flex-col items-start max-w-[85%]" id="assistant-typing-indicator">
-                      <span className="text-[10px] text-[#8b949e] mb-1 font-mono">{t.chatTyping}</span>
-                      <div className="bg-[#21262d] text-[#8b949e] border border-[#30363d] rounded-xl rounded-tl-none p-3 px-4 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-bounce"></span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-bounce delay-100"></span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-bounce delay-200"></span>
+                      <span className="text-[10px] text-txt-muted mb-1 font-mono">{t.chatTyping}</span>
+                      <div className="bg-secondary-bg text-txt-muted border border-border-main rounded-xl rounded-tl-none p-3 px-4 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce delay-100"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce delay-200"></span>
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* Chat input box form */}
-                <form onSubmit={handleSendChat} className="border-t border-[#21262d] p-3 bg-[#161b22] flex gap-2" id="chat-form">
+                <form onSubmit={handleSendChat} className="border-t border-border-head p-3 bg-secondary-bg flex gap-2" id="chat-form">
                   <input
                     type="text"
                     id="chat-input"
                     value={userChatInput}
                     onChange={(e) => setUserChatInput(e.target.value)}
                     placeholder={t.chatInputPlaceholder}
-                    className="flex-1 bg-[#0d1117] border border-[#30363d] rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
+                    className="flex-1 bg-primary-bg border border-border-main rounded-lg px-4 py-2 text-sm text-txt-main focus:outline-none focus:border-accent"
                   />
                   <button
                     type="submit"
                     disabled={!userChatInput.trim() || isSendingChat}
-                    className="p-2.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:cursor-not-allowed text-white font-semibold transition-colors cursor-pointer"
+                    className="p-2.5 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-colors cursor-pointer"
                     id="chat-send-btn"
                   >
                     <Send className="w-4 h-4" />
@@ -3060,7 +3060,7 @@ ${delayCode}
 
       {/* PERSISTENT KALI LIVE TERMINAL DRAWER */}
       <div 
-        className={`fixed bottom-0 left-0 right-0 bg-[#0d1117] border-t border-[#30363d] z-50 flex flex-col ${
+        className={`fixed bottom-0 left-0 right-0 dark-terminal-drawer border-t z-50 flex flex-col ${
           isDraggingTerminal ? "" : "transition-all duration-300"
         }`}
         style={{ height: showTerminal ? `${terminalHeight}px` : "44px" }}
@@ -3085,7 +3085,7 @@ ${delayCode}
         {/* Header bar */}
         <div 
           onClick={() => setShowTerminal(!showTerminal)}
-          className="bg-[#161b22] px-4 py-2.5 border-b border-[#21262d] flex items-center justify-between cursor-pointer select-none hover:bg-[#1f242c] transition-colors"
+          className="dark-terminal-header px-4 py-2.5 border-b flex items-center justify-between cursor-pointer select-none transition-colors"
           id="terminal-drawer-header"
         >
           <div className="flex items-center gap-2">
@@ -3130,7 +3130,7 @@ ${delayCode}
 
         {/* Console logs */}
         {showTerminal && (
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-xs text-[#c9d1d9] flex flex-col gap-3 bg-[#090d13]" id="terminal-logs-container">
+          <div className="flex-1 overflow-y-auto p-4 font-mono text-xs text-txt-main flex flex-col gap-3 bg-primary-bg" id="terminal-logs-container">
             {simulationMode && (
               <div className="bg-red-950/15 border border-red-900/25 text-red-400 px-3 py-1.5 rounded text-[10px] font-mono flex items-center gap-2 mb-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
@@ -3138,18 +3138,18 @@ ${delayCode}
               </div>
             )}
             {terminalHistory.length === 0 ? (
-              <div className="text-[#8b949e] italic text-center py-8">{t.termEmptyState}</div>
+              <div className="text-txt-muted italic text-center py-8">{t.termEmptyState}</div>
             ) : (
               terminalHistory.map((item, index) => (
-                <div key={index} className="border-b border-[#21262d]/50 pb-2.5 last:border-b-0">
-                  <div className="flex items-center justify-between text-[#8b949e] mb-1">
-                    <span className="text-red-400 flex items-center gap-1">
-                      <span className="text-[#8b949e]">kali@root:~#</span> {item.command}
+                <div key={index} className="border-b border-border-head/50 pb-2.5 last:border-b-0">
+                  <div className="flex items-center justify-between text-txt-muted mb-1">
+                    <span className="text-accent flex items-center gap-1 font-semibold">
+                      <span className="text-txt-muted font-normal">kali@root:~#</span> {item.command}
                     </span>
                     <span>{item.timestamp}</span>
                   </div>
-                  <pre className={`whitespace-pre-wrap p-3 rounded bg-[#0d1117] border font-mono text-xs leading-relaxed ${
-                    item.isError ? "border-red-500/25 text-red-400 bg-red-900/10" : "border-emerald-500/20 text-emerald-400 bg-emerald-950/5"
+                  <pre className={`whitespace-pre-wrap p-3 rounded border font-mono text-xs leading-relaxed ${
+                    item.isError ? "dark-terminal-pre-error text-red-400" : "dark-terminal-pre-success text-emerald-400"
                   }`}>
                     {item.output}
                   </pre>
@@ -3162,12 +3162,12 @@ ${delayCode}
 
         {/* Input bar inside terminal */}
         {showTerminal && (
-          <div className="bg-[#161b22] border-t border-[#21262d] p-2 px-4 flex items-center gap-2">
-            <span className="text-xs font-mono text-red-500 flex-shrink-0">kali@root:~#</span>
+          <div className="dark-terminal-input-bar border-t p-2 px-4 flex items-center gap-2">
+            <span className="text-xs font-mono text-accent font-semibold flex-shrink-0">kali@root:~#</span>
             <input 
               type="text"
               placeholder={t.termPlaceholder}
-              className="flex-1 bg-[#0d1117] border border-[#30363d] rounded px-3 py-1 text-xs text-white font-mono focus:outline-none focus:border-red-500"
+              className="flex-1 dark-terminal-input rounded px-3 py-1 text-xs font-mono focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   const inputVal = (e.target as HTMLInputElement).value;
@@ -3178,7 +3178,7 @@ ${delayCode}
                 }
               }}
             />
-            <span className="text-[10px] text-[#8b949e] font-mono">{t.termPressEnter}</span>
+            <span className="text-[10px] text-txt-muted font-mono">{t.termPressEnter}</span>
           </div>
         )}
       </div>
