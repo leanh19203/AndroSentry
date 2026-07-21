@@ -33,8 +33,8 @@ function isSafePath(p: string): boolean {
   }
 
   // Device-specific paths (ADB context) are allowed but sanitized
-  if (p.startsWith("/sdcard") || p.startsWith("/data/data/")) {
-    return /^[a-zA-Z0-9_\-\.\/:\s]+$/.test(p);
+  if (p.startsWith("/sdcard") || p.startsWith("/data/data/") || p.startsWith("/data/app/")) {
+    return /^[a-zA-Z0-9_\-\.\/:\s~=]+$/.test(p);
   }
 
   // Local absolute paths must be strictly within the workspace process.cwd()
@@ -51,7 +51,7 @@ function isSafePath(p: string): boolean {
   }
 
   // Only allow typical safe path characters. Explicitly remove '*' to block glob/wildcard exploits.
-  return /^[a-zA-Z0-9_\-\.\/:\s]+$/.test(p);
+  return /^[a-zA-Z0-9_\-\.\/:\s~=]+$/.test(p);
 }
 
 // Helper to validate package names (e.g. com.example.app)

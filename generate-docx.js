@@ -211,17 +211,25 @@ const doc = new Document({
           createText("Hỗ trợ mở nhanh trình dịch ngược mã nguồn Java của APK chỉ với một click chuột từ giao diện để kiểm thử tĩnh (Static Analysis)."),
         ]),
 
-        createHeading2("4. Phân tích Động & Frida Instrumentation"),
+        createHeading2("4. Phân tích Động & Frida Studio (Interactive & AI)"),
         createBodyParagraph([
-          createText("Cho phép can thiệp vào luồng thực thi của ứng dụng khi đang chạy (Runtime Instrumentation):"),
+          createText("Cho phép can thiệp và bẻ gãy các rào cản bảo mật ở mức runtime (Runtime Instrumentation) một cách linh hoạt:"),
         ]),
         createBulletParagraph([
-          createText("Bypass SSL Pinning: ", { bold: true }),
-          createText("Tự động đẩy Frida Server lên thiết bị Android, khởi chạy server và tiêm (inject) script bypass cơ chế ghim chứng chỉ bảo mật (SSL Pinning), giúp phân tích các gói tin HTTPS qua Burp Suite."),
+          createText("Thư viện mẫu Bypass (Presets): ", { bold: true }),
+          createText("Cung cấp sẵn các đoạn mã bypass phổ biến như SSL Pinning, Root Detection, Mock Location, v.v., tương thích hoàn toàn với các framework bảo mật phổ biến."),
         ]),
         createBulletParagraph([
-          createText("Giám sát Logcat thời gian thực: ", { bold: true }),
-          createText("Bộ lọc thông minh giúp theo dõi luồng thông báo hệ thống và log lỗi của thiết bị Android trực tiếp trên giao diện console."),
+          createText("Bộ dựng mã tương tác (Interactive Builder): ", { bold: true }),
+          createText("Sinh mã Hooking tự động theo tham số nhập từ biểu mẫu (Tên lớp, Phương thức, tham số overload, hành động can thiệp như in log, ép trả về TRUE/FALSE, trả về số nguyên tùy chỉnh hoặc bỏ qua hàm void)."),
+        ]),
+        createBulletParagraph([
+          createText("AI Sinh Frida Script (Gemini): ", { bold: true }),
+          createText("Nhận yêu cầu dạng ngôn ngữ tự nhiên và chuyển đổi trực tiếp thành mã Frida chất lượng cao kèm giải thích cơ chế và cách thực thi cụ thể từ Gemini AI."),
+        ]),
+        createBulletParagraph([
+          createText("Quản lý Frida Server & Logcat: ", { bold: true }),
+          createText("Tự động đẩy Frida Server tương thích lên thiết bị Android, khởi chạy server dưới nền và theo dõi dòng thông báo hệ thống thời gian thực trực tiếp trên bảng điều khiển."),
         ]),
 
         createHeading2("5. Kiểm thử Tĩnh và Đánh giá Cấu hình (AI AndroidManifest Auditor)"),
@@ -234,7 +242,7 @@ const doc = new Document({
         ]),
         createBulletParagraph([
           createText("Đánh giá bảo mật tự động: ", { bold: true }),
-          createText("Sử dụng mô hình trí tuệ nhân tạo (Gemini AI) tích hợp để quét và phát hiện các rủi ro bảo mật nghiêm trọng trong cấu hình, bao gồm các thành phần (Activity, Service, Receiver, Provider) bị lộ ra ngoài không có kiểm soát truy cập (exported=\"true\"), quyền truy cập quá mức cần thiết, bật chế độ gỡ lỗi (android:debuggable=\"true\"), hay cho phép sao lưu không an toàn (android:allowBackup=\"true\")."),
+          createText("Sử dụng mô hình trí tuệ nhân tạo (Gemini AI) tích hợp để quét và phát hiện các rủi ro bảo mật nghiêm trọng trong cấu hình, bao gồm các thành phần (Activity, Service, Receiver, Provider) bị lộ ra ngoài không có kiểm soát truy cập (exported=\"true\"), quyền truy cập quá mức cần thiết, bật chế độ gỡ lỗi (android:debuggable=\"true\"), hay cho phép sao lưu không an sau (android:allowBackup=\"true\")."),
         ]),
 
         createHeading2("6. Trợ lý Bảo mật AI (AI Chat Assistant)"),
@@ -307,8 +315,8 @@ const doc = new Document({
           createText("Vào tab Quản lý thiết bị (ADB), tìm kiếm ứng dụng trên thiết bị mục tiêu, nhấp chọn nút trích xuất (Backup APK) để lấy file cài đặt về máy chủ. Tiếp theo, nhấp nút Mở bằng JADX-GUI (Open in JADX) để mở nhanh giao diện dịch ngược Java của file APK đó, giúp kiểm thử tĩnh tìm kiếm lỗ hổng logic hoặc thông tin nhạy cảm."),
         ]),
         createBulletParagraph([
-          createText("Phân tích động và can thiệp Runtime (Frida Instrumentation): ", { bold: true }),
-          createText("Di chuyển đến tab Phân tích Frida (Frida), nhấp nút Khởi chạy Frida Server (Start Frida Server). Chọn ứng dụng mục tiêu cần phân tích và bấm Bypass SSL Pinning để tiêm tập lệnh cấu hình bypass ghim chứng chỉ. Sau đó cấu hình Burp Suite làm proxy để chụp bắt dữ liệu HTTPS. Đồng thời, theo dõi log hệ thống thời gian thực tại khung giám sát Logcat ở bên dưới."),
+          createText("Phân tích động và can thiệp Runtime (Frida Studio): ", { bold: true }),
+          createText("Di chuyển đến tab Phân tích Frida (Frida). Tại đây, bạn có 3 công cụ mạnh mẽ: Thư viện mẫu Bypass (Presets) để chọn nhanh kịch bản bypass phổ dụng; Bộ dựng mã tương tác (Builder) để tự động sinh mã Hooking theo tham số biểu mẫu; AI Sinh Frida Script (AI Generator) để yêu cầu AI viết script Frida theo ngôn ngữ tự nhiên. Để thực thi: Khởi động Frida Server qua giao diện, sử dụng mã script để tiêm vào ứng dụng bằng câu lệnh được cung cấp, và theo dõi log đầu ra tại khung giám sát Logcat thời gian thực."),
         ]),
         createBulletParagraph([
           createText("Tương tác với Trợ lý bảo mật chuyên sâu (AI Chat Assistant): ", { bold: true }),
