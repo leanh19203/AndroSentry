@@ -152,16 +152,16 @@ export const APKTOOL_STEPS: ApkToolStep[] = [
   {
     id: "apktool-1",
     title: "Giải nén & dịch ngược mã nguồn (Decompile)",
-    description: "Sử dụng Apktool để dịch ngược tệp base.apk thành các tệp mã nguồn Smali, tài nguyên XML và tệp Manifest dạng thô.",
-    command: "apktool d [APK_NAME].apk -o [OUTPUT_DIR]",
+    description: "Sử dụng Apktool để dịch ngược tệp APK thành các tệp mã nguồn Smali, tài nguyên XML và tệp Manifest dạng thô.",
+    command: "apktool d [APK_NAME] -o [OUTPUT_DIR]",
     tip: "Giúp bạn chỉnh sửa trực tiếp tệp AndroidManifest.xml hoặc sửa đổi các hằng số trong thư mục smali."
   },
   {
     id: "apktool-2",
     title: "Chạy Jadx-GUI để phân tích mã Java",
     description: "Khởi chạy công cụ Jadx-GUI trên Kali Linux nhằm chuyển đổi mã bytecode Dalvik (.dex) sang mã nguồn Java có độ đọc hiểu cao.",
-    command: "jadx-gui [APK_NAME].apk",
-    tip: "Lựa chọn lý tưởng cho việc đọc hiểu thuật toán, tìm khóa mã hóa AES/RSA hoặc URL ẩn trong ứng dụng."
+    command: "jadx-gui [APK_NAME]",
+    tip: "Hỗ trợ nhập tên tệp (VD: base.apk) hoặc đường dẫn tuyệt đối (VD: /home/leanh/AndroSentry/base.apk) ở khung cấu hình bên trái."
   },
   {
     id: "apktool-3",

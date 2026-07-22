@@ -210,7 +210,7 @@ export default function App() {
   const [devicePort, setDevicePort] = useState("27042");
 
   // Apktool variables
-  const [apktoolFileName, setApktoolFileName] = useState("app_target");
+  const [apktoolFileName, setApktoolFileName] = useState("base.apk");
   const [apktoolOutputDir, setApktoolOutputDir] = useState("decompiled_src");
 
   // Task Queue & Workspace Isolation State (Phase 4 Integration)
@@ -2214,7 +2214,7 @@ ${delayCode}
                       value={apktoolFileName}
                       onChange={(e) => setApktoolFileName(e.target.value)}
                       className="bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 font-mono transition-colors"
-                      placeholder="e.g. vulnerable_app"
+                      placeholder="VD: base.apk hoặc /home/leanh/AndroSentry/base.apk"
                     />
                   </div>
 
@@ -2253,8 +2253,16 @@ ${delayCode}
                 <div className="flex flex-col gap-6" id="steps-timeline">
                   {APKTOOL_STEPS.map(getTranslatedApktoolStep).map((step, idx) => {
                     // process step command in real-time
+                    let rawApk = apktoolFileName.trim() || "base.apk";
+                    let formattedApk = rawApk;
+                    // Append .apk extension if user typed filename without extension (and it doesn't already end in .apk)
+                    if (!formattedApk.toLowerCase().endsWith(".apk")) {
+                      formattedApk = `${formattedApk}.apk`;
+                    }
+
                     let finalCmd = step.command;
-                    finalCmd = finalCmd.replace(/\[APK_NAME\]/g, apktoolFileName);
+                    finalCmd = finalCmd.replace(/\[APK_NAME\]\.apk/g, formattedApk);
+                    finalCmd = finalCmd.replace(/\[APK_NAME\]/g, formattedApk);
                     finalCmd = finalCmd.replace(/\[OUTPUT_DIR\]/g, apktoolOutputDir);
                     finalCmd = finalCmd.replace(/\[DECOMPILED_DIR\]/g, apktoolOutputDir);
 

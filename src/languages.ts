@@ -140,7 +140,7 @@ export const TRANSLATIONS: Record<string, any> = {
     
     apktoolSidebarTitle: "Biến đổi APK",
     apktoolSidebarDesc: "Thiết lập tên tệp APK của bạn để tạo ra dòng lệnh biên dịch & ký số chính xác cho Kali Linux.",
-    apktoolInputOrigLabel: "Tên tệp APK gốc (Không bao gồm đuôi .apk):",
+    apktoolInputOrigLabel: "Tên hoặc đường dẫn tệp APK gốc (VD: base.apk hoặc /home/leanh/AndroSentry/base.apk):",
     apktoolInputOutLabel: "Thư mục đầu ra của Decompile:",
     apktoolErrResourceLabel: "Lỗi Build Resource:",
     apktoolErrResourceDesc: "Sử dụng thêm cờ -r khi decompile nếu apktool bị crash do lỗi phân tích file resources.arsc.",
@@ -471,7 +471,7 @@ export const TRANSLATIONS: Record<string, any> = {
     
     apktoolSidebarTitle: "APK Transformation",
     apktoolSidebarDesc: "Configure your APK filename parameters to generate precise decompiling and signing commands on Kali Linux.",
-    apktoolInputOrigLabel: "Original APK filename (Without .apk extension):",
+    apktoolInputOrigLabel: "APK filename or full path (e.g. base.apk or /home/leanh/AndroSentry/base.apk):",
     apktoolInputOutLabel: "Decompile Output Directory:",
     apktoolErrResourceLabel: "Resource Compiling Crash:",
     apktoolErrResourceDesc: "If apktool crashes while parsing resources.arsc, rebuild using the -r flag during decompilation to skip asset parsing.",
@@ -802,7 +802,7 @@ export const TRANSLATIONS: Record<string, any> = {
     
     apktoolSidebarTitle: "APK編集用パラメータ設定",
     apktoolSidebarDesc: "APKファイル名を設定し、Kali Linuxで安全にビルド・署名するためのコマンドを生成します。",
-    apktoolInputOrigLabel: "元のAPKファイル名（.apkの拡張子を除く）:",
+    apktoolInputOrigLabel: "APKファイル名またはフルパス（例: base.apk または /home/leanh/AndroSentry/base.apk）:",
     apktoolInputOutLabel: "逆コンパイル出力先フォルダ名:",
     apktoolErrResourceLabel: "リソースコンパイルエラー:",
     apktoolErrResourceDesc: "resources.arscのエラーでapktoolがクラッシュする場合、逆コンパイル時に -r フラグを付与してリソース解凍をスキップします。",
@@ -1073,7 +1073,7 @@ export const APKTOOL_STEPS_TRANSLATIONS: Record<string, Record<string, { title: 
     "apktool-2": {
       title: "Chạy Jadx-GUI để phân tích mã Java",
       description: "Khởi chạy công cụ Jadx-GUI trên Kali Linux nhằm chuyển đổi mã bytecode Dalvik (.dex) sang mã nguồn Java có độ đọc hiểu cao.",
-      tip: "Lựa chọn lý tưởng cho việc đọc hiểu thuật toán, tìm khóa mã hóa AES/RSA hoặc URL ẩn trong ứng dụng."
+      tip: "Hỗ trợ nhập tên tệp (VD: base.apk) hoặc đường dẫn tuyệt đối (VD: /home/leanh/AndroSentry/base.apk) ở ô cấu hình bên trái."
     },
     "apktool-3": {
       title: "Đóng gói lại ứng dụng sau chỉnh sửa (Recompile)",
