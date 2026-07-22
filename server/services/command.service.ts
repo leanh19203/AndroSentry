@@ -140,7 +140,7 @@ export const ARGUMENT_VALIDATORS: Record<string, (args: string[]) => { isValid: 
       const shellBin = shellArgs[0];
       if (!shellBin) return { isValid: true };
 
-      const allowedShellBins = ["getprop", "pm", "screencap", "am", "su", "netstat", "whoami"];
+      const allowedShellBins = ["getprop", "pm", "screencap", "am", "su", "netstat", "whoami", "chmod", "rm"];
       if (!allowedShellBins.includes(shellBin)) {
         return { isValid: false, error: `Lệnh shell '${shellBin}' không nằm trong whitelist cho phép.` };
       }
@@ -203,6 +203,24 @@ export const ARGUMENT_VALIDATORS: Record<string, (args: string[]) => { isValid: 
         const opt = shellArgs[1];
         if (opt && opt !== "-tuln") {
           return { isValid: false, error: "Tùy chọn netstat không được phép." };
+        }
+      } else if (shellBin === "chmod") {
+        const mode = shellArgs[1];
+        const target = shellArgs[2];
+        if (!mode || !/^[0-7]{3,4}$/.test(mode)) {
+          return { isValid: false, error: "Quyền chmod không hợp lệ (ví dụ: 755, 777)." };
+        }
+        if (!target || !target.startsWith("/data/local/tmp/")) {
+          return { isValid: false, error: "Chỉ cho phép chmod các tệp tin trong thư mục /data/local/tmp/." };
+        }
+      } else if (shellBin === "rm") {
+        const opt = shellArgs[1];
+        let target = shellArgs[2];
+        if (opt !== "-f" && opt !== "-rf") {
+          target = shellArgs[1];
+        }
+        if (!target || !target.startsWith("/data/local/tmp/")) {
+          return { isValid: false, error: "Chỉ cho phép xóa các tệp tin trong thư mục /data/local/tmp/." };
         }
       }
 
@@ -268,9 +286,10 @@ export const ARGUMENT_VALIDATORS: Record<string, (args: string[]) => { isValid: 
   },
 
   frida: (args) => {
+    const allowedFlags = ["-U", "-f", "-l", "-n", "-p", "-F", "--no-pause", "-q", "-o"];
     for (const arg of args) {
       if (arg.startsWith("-")) {
-        if (arg !== "-U" && arg !== "-f" && arg !== "-l") {
+        if (!allowedFlags.includes(arg)) {
           return { isValid: false, error: `Tùy chọn frida '${arg}' không được hỗ trợ.` };
         }
       } else {
@@ -283,8 +302,9 @@ export const ARGUMENT_VALIDATORS: Record<string, (args: string[]) => { isValid: 
   },
 
   "frida-ps": (args) => {
-    const allowed = args.every(arg => arg === "-U");
-    if (!allowed) return { isValid: false, error: "frida-ps chỉ hỗ trợ tùy chọn -U." };
+    const allowedFlags = ["-U", "-a", "-i", "-j"];
+    const allowed = args.every(arg => allowedFlags.includes(arg));
+    if (!allowed) return { isValid: false, error: "Tùy chọn frida-ps không hợp lệ (chỉ hỗ trợ -U, -a, -i, -j)." };
     return { isValid: true };
   },
 
@@ -310,8 +330,27 @@ export const ARGUMENT_VALIDATORS: Record<string, (args: string[]) => { isValid: 
   }
 };
 
+export function cleanCommandPrompt(cmd: string): string {
+  let cleaned = cmd.trim();
+  
+  // Strip multi-line/nested prompt artifacts from Kali terminal copy-paste
+  cleaned = cleaned.replace(/^┌──\(.*?\)-\[.*?\]\s*\r?\n└─\$\s*/, "");
+  cleaned = cleaned.replace(/^┌──\(.*?\)-\[.*?\]\s*\n└─\$\s*/, "");
+  
+  // Strip standard Linux/Android shell prompt formats:
+  // e.g., "kali@root:~#", "graceltexx:/ $", "graceltexx:/ #", "1|graceltexx:/ $"
+  cleaned = cleaned.replace(/^(?:\d+\|)?(?:[a-zA-Z0-9_@\-\(\)\+~:]+:)?[a-zA-Z0-9_\-\.\/~:]*[$#]\s*/, "");
+  
+  // Strip simple standalone shell prompts:
+  // e.g., ":/ #", ":/ $", "#", "$"
+  cleaned = cleaned.replace(/^[:/]*\s*[$#]\s*/, "");
+  
+  return cleaned.trim();
+}
+
 export function validateCommand(command: string): { isValid: boolean; error?: string } {
-  const trimmedCmd = command.trim();
+  const cleanedCommand = cleanCommandPrompt(command);
+  const trimmedCmd = cleanedCommand;
 
   // 1. Strict Redirection, Shell Expansion and Multi-line Block (Security Hardening)
   if (/[><`]/.test(trimmedCmd) || /\$\(/.test(trimmedCmd) || /[\r\n]/.test(trimmedCmd)) {
@@ -346,7 +385,8 @@ export function validateCommand(command: string): { isValid: boolean; error?: st
     }
 
     // 3. Heavy Blocklist Checks on commands/arguments (Blocking reverse shells, downloaders, destructors)
-    const blocklistPattern = /(rm\s+-rf|wget|curl|bash|sh\s+-c|nc\s+|netcat|ncat|python|perl|ruby|gcc|clang|\/etc\/passwd|id\s+|whoami)/i;
+    // Avoid false positive with 'android' by using '\bid\s+' word boundary checks
+    const blocklistPattern = /(rm\s+-rf|wget|curl|bash|sh\s+-c|nc\s+|netcat|ncat|python|perl|ruby|gcc|clang|\/etc\/passwd|\bid\s+|whoami)/i;
     if (cleanSegment.match(blocklistPattern)) {
       return {
         isValid: false,
@@ -516,7 +556,8 @@ export function spawnPipeline(commands: Array<{ executable: string; args: string
  * Parses and executes a chained/piped shell-like string purely using spawn and pipelines.
  */
 export async function executeLocalCommand(command: string): Promise<CommandExecutionResult> {
-  const trimmedCmd = command.trim();
+  const cleanedCommand = cleanCommandPrompt(command);
+  const trimmedCmd = cleanedCommand;
   const steps = trimmedCmd.split("&&");
   let finalStdout = "";
   let finalStderr = "";
