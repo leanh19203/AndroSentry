@@ -32,8 +32,8 @@ class TaskQueueService {
       fs.mkdirSync(this.workspaceRoot, { recursive: true });
     }
     
-    // Start periodic cleanup of workspaces older than 2 hours
-    setInterval(() => this.cleanupOldWorkspaces(), 15 * 60 * 1000);
+    // Start periodic cleanup of workspaces older than 24 hours
+    setInterval(() => this.cleanupOldWorkspaces(), 30 * 60 * 1000);
   }
 
   /**
@@ -320,7 +320,7 @@ class TaskQueueService {
   }
 
   /**
-   * Periodic cleanup of workspaces older than 2 hours to prevent disk space leaks.
+   * Periodic cleanup of workspaces older than 24 hours to prevent disk space leaks.
    */
   private cleanupOldWorkspaces() {
     console.log("[WORKSPACE CLEANUP] Running periodic cleanup...");
@@ -328,7 +328,7 @@ class TaskQueueService {
       if (!fs.existsSync(this.workspaceRoot)) return;
       const dirs = fs.readdirSync(this.workspaceRoot);
       const now = Date.now();
-      const maxAgeMs = 2 * 60 * 60 * 1000; // 2 hours
+      const maxAgeMs = 24 * 60 * 60 * 1000; // 24 hours (1 day)
 
       for (const dir of dirs) {
         const dirPath = path.join(this.workspaceRoot, dir);
